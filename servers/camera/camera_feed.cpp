@@ -51,6 +51,12 @@ void CameraFeed::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_rgb_image", "rgb_image"), &CameraFeed::set_rgb_image);
 	ClassDB::bind_method(D_METHOD("set_ycbcr_image", "ycbcr_image"), &CameraFeed::set_ycbcr_image);
 	ClassDB::bind_method(D_METHOD("set_external", "width", "height"), &CameraFeed::set_external);
+
+	ClassDB::bind_method(D_METHOD("set_external_depthmap", "depthbuffer", "width", "height"), &CameraFeed::set_external_depthmap);
+	ClassDB::bind_method(D_METHOD("is_depthmap_available"), &CameraFeed::is_depthmap_available);
+	ClassDB::bind_method(D_METHOD("set_should_display_depthmap", "enabled"), &CameraFeed::set_should_display_depthmap);
+	ClassDB::bind_method(D_METHOD("should_display_depthmap"), &CameraFeed::should_display_depthmap);
+	ClassDB::bind_method(D_METHOD("set_max_depth_meters"), &CameraFeed::set_max_depth_meters);
 	ClassDB::bind_method(D_METHOD("get_texture_tex_id", "feed_image_type"), &CameraFeed::get_texture_tex_id);
 
 	ClassDB::bind_method(D_METHOD("get_datatype"), &CameraFeed::get_datatype);
@@ -65,6 +71,7 @@ void CameraFeed::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "feed_is_active"), "set_active", "is_active");
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "feed_transform"), "set_transform", "get_transform");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "formats"), "", "get_formats");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "display_ar_depthmap"), "set_should_display_depthmap", "should_display_depthmap");
 
 	BIND_ENUM_CONSTANT(FEED_NOIMAGE);
 	BIND_ENUM_CONSTANT(FEED_RGB);
@@ -152,10 +159,15 @@ CameraFeed::CameraFeed() {
 	name = "???";
 	active = false;
 	datatype = CameraFeed::FEED_RGB;
+	depth_map_datatype = CameraFeed::FEED_NOIMAGE;
 	position = CameraFeed::FEED_UNSPECIFIED;
 	transform = Transform2D(1.0, 0.0, 0.0, -1.0, 0.0, 1.0);
 	texture[CameraServer::FEED_Y_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	texture[CameraServer::FEED_CBCR_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	depthmap_is_available = false;
+	display_depthmap = false;
+	maxDepthMeters = 30.f;
 }
 
 CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
@@ -166,10 +178,15 @@ CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
 	name = p_name;
 	active = false;
 	datatype = CameraFeed::FEED_NOIMAGE;
+	depth_map_datatype = CameraFeed::FEED_NOIMAGE;
 	position = p_position;
 	transform = Transform2D(1.0, 0.0, 0.0, -1.0, 0.0, 1.0);
 	texture[CameraServer::FEED_Y_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	texture[CameraServer::FEED_CBCR_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	depthmap_is_available = false;
+	display_depthmap = false;
+	maxDepthMeters = 30.f;
 }
 
 CameraFeed::~CameraFeed() {
@@ -177,6 +194,7 @@ CameraFeed::~CameraFeed() {
 	ERR_FAIL_NULL(RenderingServer::get_singleton());
 	RenderingServer::get_singleton()->free(texture[CameraServer::FEED_Y_IMAGE]);
 	RenderingServer::get_singleton()->free(texture[CameraServer::FEED_CBCR_IMAGE]);
+	RenderingServer::get_singleton()->free(texture[CameraServer::FEED_DEPTHMAP]);
 }
 
 void CameraFeed::set_rgb_image(const Ref<Image> &p_rgb_img) {
@@ -271,6 +289,55 @@ void CameraFeed::set_external(int p_width, int p_height) {
 
 	datatype = CameraFeed::FEED_EXTERNAL;
 }
+
+void CameraFeed::set_external_depthmap(const PackedByteArray& p_depthbuffer, int p_width, int p_height) {
+	// We're assuming here that our camera image doesn't change around formats etc, allocate the whole lot...
+	depthmap_is_available = true;
+	depthmap_base_width = p_width;
+	depthmap_base_height = p_height;
+
+    // Create the image
+    Ref<Image> image = Image::create_from_data(p_width, p_height, false, Image::FORMAT_RG8, p_depthbuffer); // Using L8 format for 8-bit per channel
+
+    // Creating a texture from this image and replacing the placeholder
+    RID new_texture = RS::get_singleton()->texture_2d_create(image);
+	RenderingServer::get_singleton()->texture_replace(texture[CameraServer::FEED_DEPTHMAP], new_texture);
+
+	depth_map_datatype = CameraFeed::FEED_EXTERNAL;
+}
+
+bool CameraFeed::is_depthmap_available() {
+	return depthmap_is_available;
+}
+
+void CameraFeed::set_should_display_depthmap(bool p_enabled) {
+	display_depthmap = p_enabled;
+}
+
+bool CameraFeed::should_display_depthmap() {
+	return display_depthmap;
+}
+
+void CameraFeed::set_max_depth_meters(float p_maxDepthMeters) {
+	maxDepthMeters = p_maxDepthMeters;
+}
+
+unsigned int CameraFeed::get_external_depthmap() {
+	return depthmap_handle;
+}
+
+float CameraFeed::get_maxDepthMeters() {
+	return maxDepthMeters;
+}
+
+int CameraFeed::get_depthmap_base_width() const {
+	return depthmap_base_width;
+}
+
+int CameraFeed::get_depthmap_base_height() const {
+	return depthmap_base_height;
+}
+
 
 bool CameraFeed::activate_feed() {
 	// nothing to do here

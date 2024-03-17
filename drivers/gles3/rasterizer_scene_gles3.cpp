@@ -32,6 +32,7 @@
 
 #include "drivers/gles3/effects/copy_effects.h"
 #include "drivers/gles3/effects/feed_effects.h"
+#include "drivers/gles3/effects/occlusion_effects.h"
 #include "rasterizer_gles3.h"
 #include "storage/config.h"
 #include "storage/mesh_storage.h"
@@ -2603,6 +2604,15 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 
 			GLES3::FeedEffects *feed_effects = GLES3::FeedEffects::get_singleton();
 			feed_effects->draw();
+
+			if (feed->is_depthmap_available()) {
+				RID camera_DEPTHMAP = feed->get_texture(CameraServer::FEED_DEPTHMAP);
+				GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
+				float max_depth_meters = feed->get_maxDepthMeters();
+
+				GLES3::OcclusionEffects *occlusion_effects = GLES3::OcclusionEffects::get_singleton();
+				occlusion_effects->fill_z_buffer(feed->is_depthmap_available(), feed->is_displaying_depthmap(), max_depth_meters);
+			}
 		}
 		scene_state.enable_gl_depth_draw(true);
 		scene_state.enable_gl_depth_test(true);
