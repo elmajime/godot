@@ -42,7 +42,7 @@ void CameraFeed::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_active", "active"), &CameraFeed::set_active);
 
 	ClassDB::bind_method(D_METHOD("get_name"), &CameraFeed::get_name);
-	ClassDB::bind_method(D_METHOD("_set_name", "name"), &CameraFeed::set_name);
+	ClassDB::bind_method(D_METHOD("set_name", "name"), &CameraFeed::set_name);
 
 	ClassDB::bind_method(D_METHOD("get_position"), &CameraFeed::get_position);
 	ClassDB::bind_method(D_METHOD("_set_position", "position"), &CameraFeed::set_position);
@@ -53,6 +53,10 @@ void CameraFeed::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_set_RGB_img", "rgb_img"), &CameraFeed::set_RGB_img);
 	ClassDB::bind_method(D_METHOD("_set_YCbCr_img", "ycbcr_img"), &CameraFeed::set_YCbCr_img);
+	ClassDB::bind_method(D_METHOD("set_external", "width", "height"), &CameraFeed::set_external);
+
+	ClassDB::bind_method(D_METHOD("get_texture", "feed_image_type"), &CameraFeed::get_texture);
+	ClassDB::bind_method(D_METHOD("get_texture_tex_id", "feed_image_type"), &CameraFeed::get_texture_tex_id);
 
 	ClassDB::bind_method(D_METHOD("get_datatype"), &CameraFeed::get_datatype);
 
@@ -71,6 +75,7 @@ void CameraFeed::_bind_methods() {
 	BIND_ENUM_CONSTANT(FEED_RGB);
 	BIND_ENUM_CONSTANT(FEED_YCBCR);
 	BIND_ENUM_CONSTANT(FEED_YCBCR_SEP);
+	BIND_ENUM_CONSTANT(FEED_EXTERNAL);
 
 	BIND_ENUM_CONSTANT(FEED_UNSPECIFIED);
 	BIND_ENUM_CONSTANT(FEED_FRONT);
@@ -138,6 +143,10 @@ void CameraFeed::set_transform(const Transform2D &p_transform) {
 
 RID CameraFeed::get_texture(CameraServer::FeedImage p_which) {
 	return texture[p_which];
+}
+
+uint64_t CameraFeed::get_texture_tex_id(CameraServer::FeedImage p_which) {
+	return RenderingServer::get_singleton()->texture_get_native_handle(texture[p_which]);
 }
 
 CameraFeed::CameraFeed() {
@@ -253,6 +262,19 @@ void CameraFeed::set_YCbCr_imgs(const Ref<Image> &p_y_img, const Ref<Image> &p_c
 
 		datatype = CameraFeed::FEED_YCBCR_SEP;
 	}
+}
+
+void CameraFeed::set_external(int p_width, int p_height) {
+	if ((base_width != p_width) || (base_height != p_height)) {
+		// We're assuming here that our camera image doesn't change around formats etc, allocate the whole lot...
+		base_width = p_width;
+		base_height = p_height;
+
+		RenderingServer::get_singleton()->texture_external_initialize(texture[CameraServer::FEED_YCBCR_IMAGE], p_width, p_height, 0);
+		RenderingServer::get_singleton()->texture_replace(texture[CameraServer::FEED_YCBCR_IMAGE], new_texture);
+	}
+
+	datatype = CameraFeed::FEED_EXTERNAL;
 }
 
 bool CameraFeed::activate_feed() {
