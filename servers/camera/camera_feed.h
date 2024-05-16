@@ -93,6 +93,7 @@ public:
 	void set_transform(const Transform2D &p_transform);
 
 	RID get_texture(CameraServer::FeedImage p_which);
+	uint64_t get_texture_tex_id(CameraServer::FeedImage p_which);
 
 	CameraFeed();
 	CameraFeed(String p_name, FeedPosition p_position = CameraFeed::FEED_UNSPECIFIED);

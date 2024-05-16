@@ -44,9 +44,15 @@
 #include "servers/camera/camera_feed.h"
 #include "servers/camera_server.h"
 
-#include <GLES2/gl2ext.h>
-
 #ifdef GLES3_ENABLED
+
+// #define GL_GLEXT_PROTOTYPES 1
+// #define GL3_PROTOTYPES 1
+// #include "thirdparty/glad/glad/gl.h"
+// #include "thirdparty/glad/glad/glx.h"
+// // #include <GLES2/gl2ext.h>
+#include "platform_gl.h"
+
 
 RasterizerSceneGLES3 *RasterizerSceneGLES3::singleton = nullptr;
 
@@ -2177,6 +2183,37 @@ void RasterizerSceneGLES3::_render_shadow_pass(RID p_light, RID p_shadow_atlas, 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void print_gl_error(const char * in_message) {
+	std::string error_value;
+	switch (glGetError())
+	{
+	case GL_NO_ERROR:
+		error_value = "";
+		break;
+	case GL_INVALID_ENUM:
+		error_value = "GL_INVALID_ENUM";
+		break;
+	case GL_INVALID_VALUE:
+		error_value = "GL_INVALID_VALUE";
+		break;
+	case GL_INVALID_OPERATION:
+		error_value = "GL_INVALID_OPERATION";
+		break;
+	case GL_OUT_OF_MEMORY:
+		error_value = "GL_OUT_OF_MEMORY";
+		break;
+	case GL_INVALID_FRAMEBUFFER_OPERATION:
+		error_value = "GL_INVALID_FRAMEBUFFER_OPERATION";
+		break;
+	default:
+		break;
+	}
+	// if (! error_value.empty()) 
+	{
+		OS::get_singleton()->print((std::string("MCT_Godot : ") + std::string(in_message) + " " + error_value).c_str());
+	}
+}
+
 void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_buffers, const CameraData *p_camera_data, const CameraData *p_prev_camera_data, const PagedArray<RenderGeometryInstance *> &p_instances, const PagedArray<RID> &p_lights, const PagedArray<RID> &p_reflection_probes, const PagedArray<RID> &p_voxel_gi_instances, const PagedArray<RID> &p_decals, const PagedArray<RID> &p_lightmaps, const PagedArray<RID> &p_fog_volumes, RID p_environment, RID p_camera_attributes, RID p_shadow_atlas, RID p_occluder_debug_tex, RID p_reflection_atlas, RID p_reflection_probe, int p_reflection_probe_pass, float p_screen_mesh_lod_threshold, const RenderShadowData *p_render_shadows, int p_render_shadow_count, const RenderSDFGIData *p_render_sdfgi_regions, int p_render_sdfgi_region_count, const RenderSDFGIUpdateData *p_sdfgi_update_data, RenderingMethod::RenderInfo *r_render_info) {
 	GLES3::TextureStorage *texture_storage = GLES3::TextureStorage::get_singleton();
 	GLES3::Config *config = GLES3::Config::get_singleton();
@@ -2498,7 +2535,12 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		_draw_sky(render_data.environment, render_data.cam_projection, render_data.cam_transform, sky_energy_multiplier, p_camera_data->view_count > 1, flip_y);
 	}
 
+	OS::get_singleton()->print("MCT_Godot : 1 RasterizerSceneGLES3 before mine/n");
+	std::string str_draw_image = draw_image ? "true": "false";
+	OS::get_singleton()->print(std::string("MCT_Godot : draw_image : " + str_draw_image + "/n").c_str());
+	OS::get_singleton()->print(std::string("MCT_Godot : camera_feed_id : " + std::to_string(camera_feed_id) + "/n").c_str());
 	if (draw_image && camera_feed_id > -1) {
+		print_gl_error("MCT 1");
 		RENDER_TIMESTAMP("Render Camera feed");
 
 		glEnable(GL_DEPTH_TEST);
@@ -2506,14 +2548,19 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
+		print_gl_error("MCT 2");
 		GLES3::CopyEffects *copy_effects = GLES3::CopyEffects::get_singleton();
 		Ref<CameraFeed> feed = CameraServer::get_singleton()->get_feed_by_id(camera_feed_id);
-		// OS::get_singleton()->print("MCT_Godot : 1 RasterizerSceneGLES3/n");
+		print_gl_error("MCT 3");
+		OS::get_singleton()->print("MCT_Godot : 2 RasterizerSceneGLES3/n");
 
 		RID dest_framebuffer = rt->self;
 		RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
+		print_gl_error("MCT 4");
 		GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 0);
+		print_gl_error("MCT 5");
 		copy_effects->copy_external(camera_YCBCR, dest_framebuffer);
+		print_gl_error("MCT 6");
 	}
 
 	if (scene_state.used_screen_texture || scene_state.used_depth_texture) {

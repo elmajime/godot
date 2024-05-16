@@ -189,7 +189,7 @@ public:
 	FUNC2(texture_3d_update, RID, const Vector<Ref<Image>> &)
 	FUNC2(texture_proxy_update, RID, RID)
 
-	FUNC3(texture_set_external, RID, int, int)
+	FUNC3R(RID, texture_set_external, RID, int, int)
 
 	//these also go pass-through
 	FUNCRIDTEX0(texture_2d_placeholder)

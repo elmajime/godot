@@ -56,6 +56,7 @@ void CameraFeed::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_external", "width", "height"), &CameraFeed::set_external);
 
 	ClassDB::bind_method(D_METHOD("get_texture", "feed_image_type"), &CameraFeed::get_texture);
+	ClassDB::bind_method(D_METHOD("get_texture_tex_id", "feed_image_type"), &CameraFeed::get_texture_tex_id);
 
 	ClassDB::bind_method(D_METHOD("get_datatype"), &CameraFeed::get_datatype);
 
@@ -137,6 +138,10 @@ void CameraFeed::set_transform(const Transform2D &p_transform) {
 
 RID CameraFeed::get_texture(CameraServer::FeedImage p_which) {
 	return texture[p_which];
+}
+
+uint64_t CameraFeed::get_texture_tex_id(CameraServer::FeedImage p_which) {
+	return RenderingServer::get_singleton()->texture_get_native_handle(texture[p_which]);
 }
 
 CameraFeed::CameraFeed() {
@@ -252,7 +257,8 @@ void CameraFeed::set_YCbCr_imgs(const Ref<Image> &p_y_img, const Ref<Image> &p_c
 
 void CameraFeed::set_external(int p_width, int p_height) {
 	OS::get_singleton()->print("MCT_Godot : CameraFeed::set_external");
-	if ((base_width != p_width) || (base_height != p_height)) {
+	// if ((base_width != p_width) || (base_height != p_height)) 
+	{
 		// We're assuming here that our camera image doesn't change around formats etc, allocate the whole lot...
 		base_width = p_width;
 		base_height = p_height;
@@ -261,7 +267,10 @@ void CameraFeed::set_external(int p_width, int p_height) {
 		// RID new_texture = RenderingServer::get_singleton()->texture_2d_create(image);
 		// texture[CameraServer::FEED_YCBCR_IMAGE] = new_texture;
 
-		RenderingServer::get_singleton()->texture_set_external(texture[CameraServer::FEED_YCBCR_IMAGE], p_width, p_height);
+		RID new_texture = RenderingServer::get_singleton()->texture_set_external(texture[CameraServer::FEED_YCBCR_IMAGE], p_width, p_height);
+		OS::get_singleton()->print(std::string("MCT_Godot : new_texture.get_id() " + std::to_string(new_texture.get_id())).c_str());
+		RenderingServer::get_singleton()->texture_replace(texture[CameraServer::FEED_YCBCR_IMAGE], new_texture);
+		OS::get_singleton()->print(std::string("MCT_Godot : new_texture.get_id() " + std::to_string(texture[CameraServer::FEED_YCBCR_IMAGE].get_id())).c_str());
 	}
 
 	datatype = CameraFeed::FEED_EXTERNAL;

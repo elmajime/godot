@@ -79,6 +79,10 @@ void main() {
 #ifdef MODE_SIMPLE_COPY
 	vec4 color = texture(source, uv_interp);
 	frag_color = color;
+	//frag_color = vec4(1.0, 0.0, 0.1, 1.0);
+	// #ifdef USE_EXTERNAL_SAMPLER
+	//	frag_color = vec4(1.0, 1.0, 1.0, 1.0); // we are here
+	//#endif
 #endif
 
 #ifdef MODE_SIMPLE_COLOR

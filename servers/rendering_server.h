@@ -112,7 +112,7 @@ public:
 	virtual void texture_3d_update(RID p_texture, const Vector<Ref<Image>> &p_data) = 0;
 	virtual void texture_proxy_update(RID p_texture, RID p_proxy_to) = 0;
 	
-	virtual void texture_set_external(RID p_texture, int p_width, int p_height) = 0;
+	virtual RID texture_set_external(RID p_texture, int p_width, int p_height) = 0;
 
 	// These two APIs can be used together or in combination with the others.
 	virtual RID texture_2d_placeholder_create() = 0;

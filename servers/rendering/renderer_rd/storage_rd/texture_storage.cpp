@@ -1108,9 +1108,9 @@ void TextureStorage::texture_proxy_initialize(RID p_texture, RID p_base) {
 	tex->proxies.push_back(p_texture);
 }
 
-void TextureStorage::texture_set_external(RID p_texture, int p_width, int p_height) {
+RID TextureStorage::texture_set_external(RID p_texture, int p_width, int p_height) {
 	Texture *texture = texture_owner.get_or_null(p_texture);
-	ERR_FAIL_COND(!texture);
+	// ERR_FAIL_COND(!texture);
 
 	texture->width = p_width;
 	texture->height = p_height;
@@ -1131,6 +1131,8 @@ void TextureStorage::texture_set_external(RID p_texture, int p_width, int p_heig
 	// glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// texture->active = true;
+
+	return texture_owner.make_rid(*texture);
 }
 
 void TextureStorage::_texture_2d_update(RID p_texture, const Ref<Image> &p_image, int p_layer, bool p_immediate) {
