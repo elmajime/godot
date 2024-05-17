@@ -2208,7 +2208,7 @@ void print_gl_error(const char * in_message) {
 	default:
 		break;
 	}
-	// if (! error_value.empty()) 
+	if (! error_value.empty()) 
 	{
 		OS::get_singleton()->print((std::string("MCT_Godot : ") + std::string(in_message) + " " + error_value).c_str());
 	}
@@ -2535,10 +2535,10 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		_draw_sky(render_data.environment, render_data.cam_projection, render_data.cam_transform, sky_energy_multiplier, p_camera_data->view_count > 1, flip_y);
 	}
 
-	OS::get_singleton()->print("MCT_Godot : 1 RasterizerSceneGLES3 before mine/n");
+	// OS::get_singleton()->print("MCT_Godot : 1 RasterizerSceneGLES3 before mine/n");
 	std::string str_draw_image = draw_image ? "true": "false";
-	OS::get_singleton()->print(std::string("MCT_Godot : draw_image : " + str_draw_image + "/n").c_str());
-	OS::get_singleton()->print(std::string("MCT_Godot : camera_feed_id : " + std::to_string(camera_feed_id) + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : draw_image : " + str_draw_image + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : camera_feed_id : " + std::to_string(camera_feed_id) + "/n").c_str());
 	if (draw_image && camera_feed_id > -1) {
 		print_gl_error("MCT 1");
 		RENDER_TIMESTAMP("Render Camera feed");
@@ -2552,7 +2552,7 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		GLES3::CopyEffects *copy_effects = GLES3::CopyEffects::get_singleton();
 		Ref<CameraFeed> feed = CameraServer::get_singleton()->get_feed_by_id(camera_feed_id);
 		print_gl_error("MCT 3");
-		OS::get_singleton()->print("MCT_Godot : 2 RasterizerSceneGLES3/n");
+		// OS::get_singleton()->print("MCT_Godot : 2 RasterizerSceneGLES3/n");
 
 		RID dest_framebuffer = rt->self;
 		RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);

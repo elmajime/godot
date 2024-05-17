@@ -774,7 +774,7 @@ void print_gl_error1(const char * in_message) {
 	default:
 		break;
 	}
-	// if (! error_value.empty()) 
+	if (! error_value.empty()) 
 	{
 		OS::get_singleton()->print((std::string("MCT_Godot : ") + std::string(in_message) + " " + error_value).c_str());
 	}
@@ -802,8 +802,8 @@ RID TextureStorage::texture_set_external(RID p_texture, int p_width, int p_heigh
 	print_gl_error1("MCT set external 3");
 	// texture_owner.initialize_rid(p_texture, texture);
 	// print_gl_error1("MCT set external 4");
-	OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : p_texture = %d", p_texture.get_id());
-	OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : texture->tex_id = %d", texture.tex_id);
+	// OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : p_texture = %d", p_texture.get_id());
+	// OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : texture->tex_id = %d", texture.tex_id);
 	return texture_owner.make_rid(texture);
 
 	// Texture *texture = texture_owner.get_or_null(p_texture);
@@ -1513,19 +1513,19 @@ bool CheckExtension1(const char* extensionName) {
 }
 
 void TextureStorage::texture_bind(RID p_texture, uint32_t p_texture_no) {
-	OS::get_singleton()->print("MCT_Godot : 1 texture_bind/n");
+	// OS::get_singleton()->print("MCT_Godot : 1 texture_bind/n");
 	Texture *texture = texture_owner.get_or_null(p_texture);
 
 	ERR_FAIL_NULL(texture);
 
 	int max_texture_units;
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_texture_units);
-	OS::get_singleton()->print(std::string("MCT_Godot : max_texture_units " + std::to_string(max_texture_units) + "/n").c_str());
-	OS::get_singleton()->print(std::string("MCT_Godot : p_texture_no " + std::to_string(p_texture_no) + "/n").c_str());
-	OS::get_singleton()->print(std::string("MCT_Godot : p_texture.get_id() " + std::to_string(p_texture.get_id()) + "/n").c_str());
-	OS::get_singleton()->print(std::string("MCT_Godot : texture->tex_id " + std::to_string(texture->tex_id) + "/n").c_str());
-	OS::get_singleton()->print(std::string("MCT_Godot : GL_TEXTURE0 " + std::to_string(GL_TEXTURE0) + "/n").c_str());
-	OS::get_singleton()->print(std::string("MCT_Godot : GL_TEXTURE0 + p_texture_no " + std::to_string(GL_TEXTURE0 + p_texture_no) + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : max_texture_units " + std::to_string(max_texture_units) + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : p_texture_no " + std::to_string(p_texture_no) + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : p_texture.get_id() " + std::to_string(p_texture.get_id()) + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : texture->tex_id " + std::to_string(texture->tex_id) + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : GL_TEXTURE0 " + std::to_string(GL_TEXTURE0) + "/n").c_str());
+	// OS::get_singleton()->print(std::string("MCT_Godot : GL_TEXTURE0 + p_texture_no " + std::to_string(GL_TEXTURE0 + p_texture_no) + "/n").c_str());
 
 
 	print_gl_error1("MCT before");
@@ -1536,8 +1536,6 @@ void TextureStorage::texture_bind(RID p_texture, uint32_t p_texture_no) {
 
 	if (! CheckExtension1("GL_OES_EGL_image_external_essl3")) {
 		OS::get_singleton()->print("MCT_Godot : GL_OES_EGL_image_external_essl3 is not available/n");
-	} else {
-		OS::get_singleton()->print("MCT_Godot : GL_OES_EGL_image_external_essl3 is available/n");
 	}
 
 	glBindTexture(texture->target, texture->tex_id);
@@ -1546,7 +1544,7 @@ void TextureStorage::texture_bind(RID p_texture, uint32_t p_texture_no) {
 	glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	// glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	OS::get_singleton()->print("MCT_Godot : 2 texture_bind/n");
+	// OS::get_singleton()->print("MCT_Godot : 2 texture_bind/n");
 
 	print_gl_error1("MCT after");
 }
