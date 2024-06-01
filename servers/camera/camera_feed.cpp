@@ -54,6 +54,10 @@ void CameraFeed::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_set_RGB_img", "rgb_img"), &CameraFeed::set_RGB_img);
 	ClassDB::bind_method(D_METHOD("_set_YCbCr_img", "ycbcr_img"), &CameraFeed::set_YCbCr_img);
 	ClassDB::bind_method(D_METHOD("set_external", "width", "height"), &CameraFeed::set_external);
+	ClassDB::bind_method(D_METHOD("set_external_depthmap", "depthbuffer", "width", "height"), &CameraFeed::set_external_depthmap);
+	ClassDB::bind_method(D_METHOD("is_depthmap_available"), &CameraFeed::is_depthmap_available);
+	ClassDB::bind_method(D_METHOD("set_display_depthmap", "enabled"), &CameraFeed::set_display_depthmap);
+	ClassDB::bind_method(D_METHOD("is_displaying_depthmap"), &CameraFeed::is_displaying_depthmap);
 
 	ClassDB::bind_method(D_METHOD("get_texture", "feed_image_type"), &CameraFeed::get_texture);
 	ClassDB::bind_method(D_METHOD("get_texture_tex_id", "feed_image_type"), &CameraFeed::get_texture_tex_id);
@@ -63,6 +67,7 @@ void CameraFeed::_bind_methods() {
 	ADD_GROUP("Feed", "feed_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "feed_is_active"), "set_active", "is_active");
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "feed_transform"), "set_transform", "get_transform");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "display_ar_depthmap"), "set_display_depthmap", "is_displaying_depthmap");
 
 	BIND_ENUM_CONSTANT(FEED_NOIMAGE);
 	BIND_ENUM_CONSTANT(FEED_RGB);
@@ -153,10 +158,14 @@ CameraFeed::CameraFeed() {
 	name = "???";
 	active = false;
 	datatype = CameraFeed::FEED_RGB;
+	depth_map_datatype = CameraFeed::FEED_NOIMAGE;
 	position = CameraFeed::FEED_UNSPECIFIED;
 	transform = Transform2D(1.0, 0.0, 0.0, -1.0, 0.0, 1.0);
 	texture[CameraServer::FEED_Y_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	texture[CameraServer::FEED_CBCR_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	depthmap_is_available = false;
+	display_depthmap = false;
 }
 
 CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
@@ -168,10 +177,14 @@ CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
 	name = p_name;
 	active = false;
 	datatype = CameraFeed::FEED_NOIMAGE;
+	depth_map_datatype = CameraFeed::FEED_NOIMAGE;
 	position = p_position;
 	transform = Transform2D(1.0, 0.0, 0.0, -1.0, 0.0, 1.0);
 	texture[CameraServer::FEED_Y_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	texture[CameraServer::FEED_CBCR_IMAGE] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
+	depthmap_is_available = false;
+	display_depthmap = false;
 }
 
 CameraFeed::~CameraFeed() {
@@ -179,6 +192,7 @@ CameraFeed::~CameraFeed() {
 	ERR_FAIL_NULL(RenderingServer::get_singleton());
 	RenderingServer::get_singleton()->free(texture[CameraServer::FEED_Y_IMAGE]);
 	RenderingServer::get_singleton()->free(texture[CameraServer::FEED_CBCR_IMAGE]);
+	RenderingServer::get_singleton()->free(texture[CameraServer::FEED_DEPTHMAP]);
 }
 
 void CameraFeed::set_RGB_img(const Ref<Image> &p_rgb_img) {
@@ -274,6 +288,60 @@ void CameraFeed::set_external(int p_width, int p_height) {
 	}
 
 	datatype = CameraFeed::FEED_EXTERNAL;
+}
+
+void CameraFeed::set_external_depthmap(const PackedByteArray& p_depthbuffer, int p_width, int p_height) {
+	//? TODO: Maxime check if we can use the glint handle given by ARCore instead of using the CPU
+
+	// We're assuming here that our camera image doesn't change around formats etc, allocate the whole lot...
+	depthmap_is_available = true;
+	depthmap_base_width = p_width;
+	depthmap_base_height = p_height;
+
+	// int num_elements = p_width * p_height;
+    // const uint16_t* depth_data = static_cast<const uint16_t*>(p_depthbuffer);
+
+    // // Create a vector and copy the data
+    // std::vector<uint16_t> depth_vector(depth_data, depth_data + num_elements);
+
+
+    // Create an Image with the depth buffer data
+    // Vector<uint8_t> data;
+    // data.resize(p_width * p_height * 2); // 2 bytes per pixel (16-bit)
+
+	// // Copy depth buffer data to Godot Image data
+    // for (int i = 0; i < p_width * p_height; ++i) {
+    //     uint16_t depth_value = p_depthbuffer[i];
+    //     data.write[i * 2] = depth_value & 0xFF; // Low byte
+    //     data.write[i * 2 + 1] = (depth_value >> 8) & 0xFF; // High byte
+    // }
+
+    // Create the image
+    Ref<Image> image = Image::create_from_data(p_width, p_height, false, Image::FORMAT_RG8, p_depthbuffer); // Using L8 format for 8-bit per channel
+
+    // Creating a texture from this image and replacing the placeholder
+    RID new_texture = RS::get_singleton()->texture_2d_create(image);
+	RenderingServer::get_singleton()->texture_replace(texture[CameraServer::FEED_DEPTHMAP], new_texture);
+
+	// depthmap_handle = p_depthmap_handle;
+	
+	depth_map_datatype = CameraFeed::FEED_EXTERNAL;
+}
+
+bool CameraFeed::is_depthmap_available() {
+	return depthmap_is_available;
+}
+
+void CameraFeed::set_display_depthmap(bool p_enabled) {
+	display_depthmap = p_enabled;
+}
+
+bool CameraFeed::is_displaying_depthmap() {
+	return display_depthmap;
+}
+
+unsigned int CameraFeed::get_external_depthmap() {
+	return depthmap_handle;
 }
 
 bool CameraFeed::activate_feed() {

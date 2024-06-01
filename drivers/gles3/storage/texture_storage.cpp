@@ -774,7 +774,7 @@ void print_gl_error1(const char * in_message) {
 	default:
 		break;
 	}
-	if (! error_value.empty()) 
+	// if (! error_value.empty()) 
 	{
 		OS::get_singleton()->print((std::string("MCT_Godot : ") + std::string(in_message) + " " + error_value).c_str());
 	}
@@ -793,6 +793,7 @@ RID TextureStorage::texture_set_external(RID p_texture, int p_width, int p_heigh
 	texture.target = GL_TEXTURE_EXTERNAL_OES;
 #endif
 	_get_gl_image_and_format(Ref<Image>(), texture.format, texture.real_format, texture.gl_format_cache, texture.gl_internal_format_cache, texture.gl_type_cache, texture.compressed, false);
+	print_gl_error1("MCT set external 0");
 	texture.total_data_size = Image::get_image_data_size(texture.width, texture.height, texture.format, texture.mipmaps);
 	texture.active = true;
 	print_gl_error1("MCT set external 1");
@@ -1520,13 +1521,6 @@ void TextureStorage::texture_bind(RID p_texture, uint32_t p_texture_no) {
 
 	int max_texture_units;
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_texture_units);
-	// OS::get_singleton()->print(std::string("MCT_Godot : max_texture_units " + std::to_string(max_texture_units) + "/n").c_str());
-	// OS::get_singleton()->print(std::string("MCT_Godot : p_texture_no " + std::to_string(p_texture_no) + "/n").c_str());
-	// OS::get_singleton()->print(std::string("MCT_Godot : p_texture.get_id() " + std::to_string(p_texture.get_id()) + "/n").c_str());
-	// OS::get_singleton()->print(std::string("MCT_Godot : texture->tex_id " + std::to_string(texture->tex_id) + "/n").c_str());
-	// OS::get_singleton()->print(std::string("MCT_Godot : GL_TEXTURE0 " + std::to_string(GL_TEXTURE0) + "/n").c_str());
-	// OS::get_singleton()->print(std::string("MCT_Godot : GL_TEXTURE0 + p_texture_no " + std::to_string(GL_TEXTURE0 + p_texture_no) + "/n").c_str());
-
 
 	print_gl_error1("MCT before");
 

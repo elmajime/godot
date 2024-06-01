@@ -14,6 +14,7 @@ mode_cube_to_octahedral = #define CUBE_TO_OCTAHEDRAL \n#define USE_COPY_SECTION
 #[specializations]
 
 USE_EXTERNAL_SAMPLER = false
+COPY_DEPTHMAP = false
 
 #[vertex]
 
@@ -75,14 +76,102 @@ uniform sampler2D source; // texunit:0
 
 layout(location = 0) out vec4 frag_color;
 
+const float midDepthMeters = 2.0; // was 8.0 in the example
+const float maxDepthMeters = 65.0; // was 30.0 in the example
+
+#define CLAMP01(T) clamp((T), 0.0, 1.0)
+#define EASE(T) smoothstep(0.0, 1.0, (T))
+
+vec3 CouleurRVB(in int Hex)
+{
+    // 0xABCDEF
+    int AB = (Hex & 0x00FF0000) >> 16;
+    int CD = (Hex & 0x0000FF00) >> 8;
+    int EF = Hex & 0x000000FF;
+    return pow(vec3(AB, CD, EF)/255.0, vec3(2.2));
+}
+
+vec3 CatmulRom(in float T, vec3 D, vec3 C, vec3 B, vec3 A)
+{
+    return 0.5 * ((2.0 * B) + (-A + C) * T + (2.0 * A - 5.0 * B + 4.0 * C - D) * T*T + (-A + 3.0 * B - 3.0 * C + D) *T*T*T);
+}
+
+vec3 ColorRamp_BSpline(in float T, vec4 A, in vec4 B, in vec4 C, in vec4 D)
+{
+    // Distances = 
+    float AB = B.w-A.w;
+    float BC = C.w-B.w;
+    float CD = D.w-C.w;
+ 
+    // Intervales :
+    float iAB = CLAMP01((T-A.w)/AB);
+    float iBC = CLAMP01((T-B.w)/BC);
+    float iCD = CLAMP01((T-C.w)/CD);
+    
+    // Pondérations :
+    vec4 p = vec4(1.0-iAB, iAB-iBC, iBC-iCD, iCD);
+    vec3 cA = CatmulRom(p.x, A.xyz, A.xyz, B.xyz, C.xyz);
+    vec3 cB = CatmulRom(p.y, A.xyz, B.xyz, C.xyz, D.xyz);
+    vec3 cC = CatmulRom(p.z, B.xyz, C.xyz, D.xyz, D.xyz);
+    vec3 cD = D.xyz;
+
+    if(T < B.w) return cA.xyz;
+    if(T < C.w) return cB.xyz;
+    if(T < D.w) return cC.xyz;
+    return cD.xyz;
+}
+
+float depthInMillimeters(in sampler2D depthTexture, in vec2 depthUV) {
+	// Depth is packed into the red and green components of its texture.
+	// The texture is a normalized format, storing millimeters.
+	vec2 packedDepthAndVisibility = texture(depthTexture, depthUV).xy;
+	return dot(packedDepthAndVisibility.xy, vec2(255.0, 256.0 * 255.0));
+}
+
+float inverseLerp(float value, float minBound, float maxBound) {
+	return clamp((value - minBound) / (maxBound - minBound), 0.0, 1.0);
+}
+
+// vec3 depthAsColor(in float x) {
+// 	//return vec3(1.0 - x, x, 0.0);
+// 	return colorRamp(x);
+// }
+
 void main() {
 #ifdef MODE_SIMPLE_COPY
+#ifdef COPY_DEPTHMAP
+	// DepthMap
+	float depth_mm = depthInMillimeters(source, uv_interp);
+	float depth_meters = depth_mm * 0.001;
+
+	float normalized_depth = inverseLerp(depth_meters, 0.0, midDepthMeters);
+	// if (depth_meters < midDepthMeters) {
+	// 	// Short-range depth (0m to 8m) maps to first half of the color palette;
+	// 	normalized_depth = inverseLerp(depth_meters, 0.0, midDepthMeters) * 0.5;
+	// } else {
+	// 	// Long-range depth (8m to 30m) maps to second half of the color palette.
+	// 	normalized_depth = inverseLerp(depth_meters, midDepthMeters, maxDepthMeters) * 0.5 + 0.5;
+	// }
+
+	vec4 A = vec4(CouleurRVB(0x6a2c70), 0.05);
+    vec4 B = vec4(CouleurRVB(0xb83b5e), 0.22);
+    vec4 C = vec4(CouleurRVB(0xf08a5d), 0.5);
+    vec4 D = vec4(CouleurRVB(0xf9ed69), 0.9);
+
+	vec4 depth_color = vec4(ColorRamp_BSpline(normalized_depth, A,B,C,D), 1.0);
+
+	// vec4 depth_color = vec4(uv_interp.x, uv_interp.y, 0.0, 1.0);
+	// vec4 depth_color = vec4(depthAsColor(normalized_depth), 1.0);
+
+	// Invalid depth (pixels with value 0) mapped to black.
+    depth_color.rgb *= sign(depth_meters);
+	frag_color = depth_color;
+
+#else
+	// Background camera feed
 	vec4 color = texture(source, uv_interp);
 	frag_color = color;
-	//frag_color = vec4(1.0, 0.0, 0.1, 1.0);
-	// #ifdef USE_EXTERNAL_SAMPLER
-	//	frag_color = vec4(1.0, 1.0, 1.0, 1.0); // we are here
-	//#endif
+#endif // COPY_DEPTHMAP
 #endif
 
 #ifdef MODE_SIMPLE_COLOR
@@ -122,6 +211,4 @@ void main() {
 	frag_color = texture(source_cube, dir);
 
 #endif
-
-	// frag_color = vec4(1.0, 1.0, 0.1, 1.0);
 }

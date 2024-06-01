@@ -160,7 +160,7 @@ void CopyEffects::copy_cube_to_rect(const Rect2 &p_rect) {
 	draw_screen_quad();
 }
 
-void CopyEffects::copy_external(RID p_source_texture, RID p_dest_framebuffer) {
+void CopyEffects::copy_external() {
 
 	// Check if GL_OES_EGL_image_external_essl3 extension is supported
     const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
@@ -179,6 +179,18 @@ void CopyEffects::copy_external(RID p_source_texture, RID p_dest_framebuffer) {
 	// OS::get_singleton()->print("MCT_Godot : Should draw copy!"); -> OK
 	draw_screen_quad();
 }
+
+void CopyEffects::copy_depthmap() {
+	bool success = copy.shader.version_bind_shader(copy.shader_version, CopyShaderGLES3::MODE_DEFAULT, CopyShaderGLES3::COPY_DEPTHMAP);
+	if (!success) {
+		OS::get_singleton()->print("MCT_Godot : Could not bind version_bind_shader COPY_DEPTHMAP");
+		return;
+	}
+
+	// OS::get_singleton()->print("MCT_Godot : Should draw copy!"); -> OK
+	draw_screen_quad();
+}
+
 
 // Intended for efficiently mipmapping textures.
 void CopyEffects::bilinear_blur(GLuint p_source_texture, int p_mipmap_count, const Rect2i &p_region) {

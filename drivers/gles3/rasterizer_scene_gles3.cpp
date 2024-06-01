@@ -53,6 +53,10 @@
 // // #include <GLES2/gl2ext.h>
 #include "platform_gl.h"
 
+#ifdef ANDROID_ENABLED
+#include <GLES2/gl2ext.h>
+#endif
+
 
 RasterizerSceneGLES3 *RasterizerSceneGLES3::singleton = nullptr;
 
@@ -2208,7 +2212,7 @@ void print_gl_error(const char * in_message) {
 	default:
 		break;
 	}
-	if (! error_value.empty()) 
+	// if (! error_value.empty()) 
 	{
 		OS::get_singleton()->print((std::string("MCT_Godot : ") + std::string(in_message) + " " + error_value).c_str());
 	}
@@ -2555,12 +2559,33 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		// OS::get_singleton()->print("MCT_Godot : 2 RasterizerSceneGLES3/n");
 
 		RID dest_framebuffer = rt->self;
-		RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
-		print_gl_error("MCT 4");
-		GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 0);
-		print_gl_error("MCT 5");
-		copy_effects->copy_external(camera_YCBCR, dest_framebuffer);
-		print_gl_error("MCT 6");
+		if (feed->is_depthmap_available() && feed->is_displaying_depthmap()) {
+			RID camera_DEPTHMAP = feed->get_texture(CameraServer::FEED_DEPTHMAP);
+			// unsigned int camera_depthmap = feed->get_external_depthmap();
+			print_gl_error("MCT 4a");
+				// glActiveTexture(GL_TEXTURE0 + 0);
+
+				// glBindTexture(GL_TEXTURE_EXTERNAL_OES, camera_depthmap);
+				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
+			print_gl_error("MCT 5a");
+			// RID useless;
+			// copy_effects->copy_external(useless, dest_framebuffer);
+			// copy_effects->copy_external(camera_DEPTHMAP, dest_framebuffer);
+			copy_effects->copy_depthmap();
+			print_gl_error("MCT 6a");
+
+		} else {
+			RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
+			print_gl_error("MCT 4b");
+			GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 0);
+			print_gl_error("MCT 5b");
+			copy_effects->copy_external();
+			print_gl_error("MCT 6b");
+		}
 	}
 
 	if (scene_state.used_screen_texture || scene_state.used_depth_texture) {

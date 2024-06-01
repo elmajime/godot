@@ -36,6 +36,8 @@
 #include "servers/camera_server.h"
 #include "servers/rendering_server.h"
 
+#include <vector>
+
 /**
 	The camera server is a singleton object that gives access to the various
 	camera feeds that can be used as the background for our environment.
@@ -64,6 +66,9 @@ private:
 	int base_width;
 	int base_height;
 
+	int depthmap_base_width;
+	int depthmap_base_height;
+
 protected:
 	String name; // name of our camera feed
 	FeedDataType datatype; // type of texture data stored
@@ -72,6 +77,12 @@ protected:
 
 	bool active; // only when active do we actually update the camera texture each frame
 	RID texture[CameraServer::FEED_IMAGES]; // texture images needed for this
+
+	FeedDataType depth_map_datatype; // type of texture representing the depthmap
+	bool depthmap_is_available;
+	bool display_depthmap;
+
+	unsigned int depthmap_handle;
 
 	static void _bind_methods();
 
@@ -104,6 +115,12 @@ public:
 	void set_YCbCr_img(const Ref<Image> &p_ycbcr_img);
 	void set_YCbCr_imgs(const Ref<Image> &p_y_img, const Ref<Image> &p_cbcr_img);
 	void set_external(int p_width, int p_height);
+	void set_external_depthmap(const PackedByteArray& p_depthbuffer, int p_width, int p_height);
+	unsigned int get_external_depthmap();
+
+	bool is_depthmap_available();
+	void set_display_depthmap(bool p_enabled);
+	bool is_displaying_depthmap();
 
 	virtual bool activate_feed();
 	virtual void deactivate_feed();
