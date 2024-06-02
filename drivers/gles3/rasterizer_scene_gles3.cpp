@@ -31,6 +31,8 @@
 #include "rasterizer_scene_gles3.h"
 
 #include "drivers/gles3/effects/copy_effects.h"
+#include "drivers/gles3/effects/feed_effects.h"
+#include "drivers/gles3/effects/occlusion_effects.h"
 #include "rasterizer_gles3.h"
 #include "storage/config.h"
 #include "storage/mesh_storage.h"
@@ -2553,7 +2555,7 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		glCullFace(GL_BACK);
 
 		print_gl_error("MCT 2");
-		GLES3::CopyEffects *copy_effects = GLES3::CopyEffects::get_singleton();
+		GLES3::FeedEffects *feed_effects = GLES3::FeedEffects::get_singleton();
 		Ref<CameraFeed> feed = CameraServer::get_singleton()->get_feed_by_id(camera_feed_id);
 		print_gl_error("MCT 3");
 		// OS::get_singleton()->print("MCT_Godot : 2 RasterizerSceneGLES3/n");
@@ -2573,17 +2575,26 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 			GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
 			print_gl_error("MCT 5a");
 			// RID useless;
-			// copy_effects->copy_external(useless, dest_framebuffer);
-			// copy_effects->copy_external(camera_DEPTHMAP, dest_framebuffer);
-			copy_effects->copy_depthmap();
+			// feed_effects->copy_external(useless, dest_framebuffer);
+			// feed_effects->copy_external(camera_DEPTHMAP, dest_framebuffer);
+			OS::get_singleton()->print("MCT_Godot : get_midDepthMeters : %f", feed->get_midDepthMeters());
+			OS::get_singleton()->print("MCT_Godot : get_maxDepthMeters : %f", feed->get_maxDepthMeters());
+			feed_effects->copy_depthmap(feed->get_midDepthMeters(), feed->get_maxDepthMeters());
 			print_gl_error("MCT 6a");
+
+			GLES3::OcclusionEffects *occlusion_effects = GLES3::OcclusionEffects::get_singleton();
+
+			GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
+			uint8_t width = 1152;//rb->width;//feed->get_base_width() * 100;
+			uint8_t height = 648;//rb->height;//feed->get_base_height() * 100;
+			occlusion_effects->fill_z_buffer(width, height, scene_state.ubo.inv_view_matrix, scene_state.ubo.inv_projection_matrix);
 
 		} else {
 			RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
 			print_gl_error("MCT 4b");
 			GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 0);
 			print_gl_error("MCT 5b");
-			copy_effects->copy_external();
+			feed_effects->copy_external_feed();
 			print_gl_error("MCT 6b");
 		}
 	}

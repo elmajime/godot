@@ -58,6 +58,7 @@ void CameraFeed::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_depthmap_available"), &CameraFeed::is_depthmap_available);
 	ClassDB::bind_method(D_METHOD("set_display_depthmap", "enabled"), &CameraFeed::set_display_depthmap);
 	ClassDB::bind_method(D_METHOD("is_displaying_depthmap"), &CameraFeed::is_displaying_depthmap);
+	ClassDB::bind_method(D_METHOD("set_depthmap_display_mapping"), &CameraFeed::set_depthmap_display_mapping);
 
 	ClassDB::bind_method(D_METHOD("get_texture", "feed_image_type"), &CameraFeed::get_texture);
 	ClassDB::bind_method(D_METHOD("get_texture_tex_id", "feed_image_type"), &CameraFeed::get_texture_tex_id);
@@ -166,6 +167,8 @@ CameraFeed::CameraFeed() {
 	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	depthmap_is_available = false;
 	display_depthmap = false;
+	midDepthMeters = 8.f;
+	maxDepthMeters = 30.f;
 }
 
 CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
@@ -185,6 +188,8 @@ CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
 	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	depthmap_is_available = false;
 	display_depthmap = false;
+	midDepthMeters = 8.f;
+	maxDepthMeters = 30.f;
 }
 
 CameraFeed::~CameraFeed() {
@@ -340,9 +345,31 @@ bool CameraFeed::is_displaying_depthmap() {
 	return display_depthmap;
 }
 
+void CameraFeed::set_depthmap_display_mapping(float p_midDepthMeters, float p_maxDepthMeters) {
+	midDepthMeters = p_midDepthMeters;
+	maxDepthMeters = p_maxDepthMeters;
+}
+
 unsigned int CameraFeed::get_external_depthmap() {
 	return depthmap_handle;
 }
+
+float CameraFeed::get_midDepthMeters() {
+	return midDepthMeters;
+}
+
+float CameraFeed::get_maxDepthMeters() {
+	return maxDepthMeters;
+}
+
+int CameraFeed::get_depthmap_base_width() const {
+	return depthmap_base_width;
+}
+
+int CameraFeed::get_depthmap_base_height() const {
+	return depthmap_base_height;
+}
+
 
 bool CameraFeed::activate_feed() {
 	// nothing to do here

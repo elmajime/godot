@@ -33,7 +33,7 @@ def exec(cmd, current_working_dir="./", err_pattern="auie"):
 def main() -> bool:
     global needs_stopping
     print("Compiling godot templates")
-    exec(["scons", "platform=android", "target=template_release", "arch=arm64", "debug_symbols=yes"], err_pattern="scons: building terminated because of errors.")
+    # exec(["scons", "platform=android", "target=template_release", "arch=arm64", "debug_symbols=yes"], err_pattern="scons: building terminated because of errors.")
 
     if needs_stopping:
         return False
@@ -62,7 +62,7 @@ def main() -> bool:
     android_template_files = [
         "bin/android_source.zip",
         "bin/android_debug.apk",
-        "bin/android_release.apk"
+        # "bin/android_release.apk"
     ]
 
     print("Copying android templates")

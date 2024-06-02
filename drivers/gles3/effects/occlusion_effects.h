@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  copy_effects.h                                                        */
+/*  occlusion_effects.h                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,52 +28,41 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef COPY_EFFECTS_GLES3_H
-#define COPY_EFFECTS_GLES3_H
+#ifndef OCCLUSION_EFFECTS_GLES3_H
+#define OCCLUSION_EFFECTS_GLES3_H
 
 #ifdef GLES3_ENABLED
 
-#include "drivers/gles3/shaders/copy.glsl.gen.h"
+#include "drivers/gles3/shaders/occlusion.glsl.gen.h"
 
 namespace GLES3 {
 
-class CopyEffects {
+class OcclusionEffects {
+    private:
+    struct Occlusion {
+        OcclusionShaderGLES3 shader;
+        RID shader_version;
+    } occlusion;
+
+    static OcclusionEffects * singleton;
+
+	GLuint screen_point_cloud = 0;
+	GLuint screen_point_cloud_array = 0;
+
+    public:
+	static OcclusionEffects *get_singleton();
+    
+	OcclusionEffects();
+	~OcclusionEffects();
+
+	void fill_z_buffer(uint8_t p_vertical_precision, uint8_t p_horizontal_precision, const float* p_inv_view_mat, const float* p_inv_proj_mat);
+
 private:
-	struct Copy {
-		CopyShaderGLES3 shader;
-		RID shader_version;
-	} copy;
-
-	static CopyEffects *singleton;
-
-	// Use for full-screen effects. Slightly more efficient than screen_quad as this eliminates pixel overdraw along the diagonal.
-	GLuint screen_triangle = 0;
-	GLuint screen_triangle_array = 0;
-
-	// Use for rect-based effects.
-	GLuint quad = 0;
-	GLuint quad_array = 0;
-
-public:
-	static CopyEffects *get_singleton();
-
-	CopyEffects();
-	~CopyEffects();
-
-	// These functions assume that a framebuffer and texture are bound already. They only manage the shader, uniforms, and vertex array.
-	void copy_to_rect(const Rect2 &p_rect);
-	void copy_to_and_from_rect(const Rect2 &p_rect);
-	void copy_screen();
-	void copy_cube_to_rect(const Rect2 &p_rect);
-	void bilinear_blur(GLuint p_source_texture, int p_mipmap_count, const Rect2i &p_region);
-	void gaussian_blur(GLuint p_source_texture, int p_mipmap_count, const Rect2i &p_region, const Size2i &p_size);
-	void set_color(const Color &p_color, const Rect2i &p_region);
-	void draw_screen_triangle();
-	void draw_screen_quad();
+	void draw_screen_point_cloud(uint16_t p_nbPoints);
 };
 
-} //namespace GLES3
+} // namespace GLES3
 
 #endif // GLES3_ENABLED
 
-#endif // COPY_EFFECTS_GLES3_H
+#endif // OCCLUSION_EFFECTS_GLES3_H
