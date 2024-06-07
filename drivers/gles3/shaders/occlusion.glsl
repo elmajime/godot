@@ -15,53 +15,10 @@ COPY_DEPTHMAP = false
 layout(location = 0) in vec2 vertex_attrib;
 
 out vec2 uv_interp;
-// out float odepth;
-/* clang-format on */
 
-// uniform sampler2D source; // texunit:0
-// uniform int nb_horizontal_points;
-// uniform int nb_vertical_points;
-// uniform float screen_point_size;
-// uniform float max_depth;
-// uniform mat4 inv_view_projection_matrix;
 
-// float depthInMillimeters(in sampler2D depthTexture, in vec2 depthUV) {
-// 	// Depth is packed into the red and green components of its texture.
-// 	// The texture is a normalized format, storing millimeters.
-// 	vec2 packedDepthAndVisibility = texture(depthTexture, depthUV).xy;
-// 	return dot(packedDepthAndVisibility.xy, vec2(255.0, 256.0 * 255.0));
-// }
-
-// float inverseLerp(float value, float minBound, float maxBound) {
-// 	return clamp((value - minBound) / (maxBound - minBound), 0.0, 1.0);
-// }
-
-void main() {
-    // int nb_vertices = 6;
-
-    // int index = gl_VertexID / nb_vertices;
-
-    // vec2 index2D = vec2(float(index % nb_horizontal_points), float(index/nb_horizontal_points));
-
-    // vec2 normalized_point_position = vec2(index2D.x / float(nb_horizontal_points), index2D.y / float(nb_vertical_points));
-
-    // vec2 normalized = normalized_point_position + vertex_attrib * screen_point_size;
-
-    // vec2 ndc = (normalized) * 2.0;
-
-    // uv_interp = normalized;
-    
-	uv_interp = vertex_attrib * 0.5 + 0.5;
-
-    // float depth_mm = depthInMillimeters(source, uv_interp);
-	// float depth_meters = depth_mm * 0.001;
-    // float normalized_depth = inverseLerp(depth_meters, 0.0, max_depth);
-    // odepth = normalized_depth;
-
-    // vec4 position = vec4(ndc, 0.0, 1.0);
-    // gl_Position = position;
-
-    
+void main() {    
+	uv_interp = vertex_attrib * 0.5 + 0.5;    
 	gl_Position = vec4(vertex_attrib, 1.0, 1.0);
 }
 
@@ -70,7 +27,7 @@ void main() {
 
 layout(location = 0) out vec4 frag_color;
 in vec2 uv_interp;
-// in float odepth;
+
 /* clang-format on */
 uniform sampler2D source; // texunit:0
 #ifdef USE_EXTERNAL_SAMPLER

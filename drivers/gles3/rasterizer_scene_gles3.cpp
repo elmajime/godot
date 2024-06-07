@@ -2189,37 +2189,6 @@ void RasterizerSceneGLES3::_render_shadow_pass(RID p_light, RID p_shadow_atlas, 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void print_gl_error(const char * in_message) {
-	std::string error_value;
-	switch (glGetError())
-	{
-	case GL_NO_ERROR:
-		error_value = "";
-		break;
-	case GL_INVALID_ENUM:
-		error_value = "GL_INVALID_ENUM";
-		break;
-	case GL_INVALID_VALUE:
-		error_value = "GL_INVALID_VALUE";
-		break;
-	case GL_INVALID_OPERATION:
-		error_value = "GL_INVALID_OPERATION";
-		break;
-	case GL_OUT_OF_MEMORY:
-		error_value = "GL_OUT_OF_MEMORY";
-		break;
-	case GL_INVALID_FRAMEBUFFER_OPERATION:
-		error_value = "GL_INVALID_FRAMEBUFFER_OPERATION";
-		break;
-	default:
-		break;
-	}
-	// if (! error_value.empty()) 
-	{
-		OS::get_singleton()->print((std::string("MCT_Godot : ") + std::string(in_message) + " " + error_value).c_str());
-	}
-}
-
 void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_buffers, const CameraData *p_camera_data, const CameraData *p_prev_camera_data, const PagedArray<RenderGeometryInstance *> &p_instances, const PagedArray<RID> &p_lights, const PagedArray<RID> &p_reflection_probes, const PagedArray<RID> &p_voxel_gi_instances, const PagedArray<RID> &p_decals, const PagedArray<RID> &p_lightmaps, const PagedArray<RID> &p_fog_volumes, RID p_environment, RID p_camera_attributes, RID p_shadow_atlas, RID p_occluder_debug_tex, RID p_reflection_atlas, RID p_reflection_probe, int p_reflection_probe_pass, float p_screen_mesh_lod_threshold, const RenderShadowData *p_render_shadows, int p_render_shadow_count, const RenderSDFGIData *p_render_sdfgi_regions, int p_render_sdfgi_region_count, const RenderSDFGIUpdateData *p_sdfgi_update_data, RenderingMethod::RenderInfo *r_render_info) {
 	GLES3::TextureStorage *texture_storage = GLES3::TextureStorage::get_singleton();
 	GLES3::Config *config = GLES3::Config::get_singleton();
@@ -2400,15 +2369,6 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 			case RS::ENV_BG_CAMERA_FEED: {
 				camera_feed_id = environment_get_camera_feed_id(render_data.environment);
 				draw_image = true;
-				// RID camera_RGBA = feed->get_texture(CameraServer::FEED_RGBA_IMAGE);
-				// RS::get_singleton()->texture_bind(camera_RGBA, 0);
-				// // TODO: we need to find a better way of doing this
-				// storage->shaders.copy.add_custom_define("#extension GL_OES_EGL_image_external : require\n");
-				// storage->shaders.copy.set_conditional(CopyShaderGLES2::USE_EXTERNAL_SAMPLER, true);
-				// clear_color = environment_get_bg_color(render_data.environment);
-				// clear_color.r *= bg_energy_multiplier;
-				// clear_color.g *= bg_energy_multiplier;
-				// clear_color.b *= bg_energy_multiplier;
 			} break;
 			default: {
 			}
@@ -2541,12 +2501,7 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		_draw_sky(render_data.environment, render_data.cam_projection, render_data.cam_transform, sky_energy_multiplier, p_camera_data->view_count > 1, flip_y);
 	}
 
-	// OS::get_singleton()->print("MCT_Godot : 1 RasterizerSceneGLES3 before mine/n");
-	std::string str_draw_image = draw_image ? "true": "false";
-	// OS::get_singleton()->print(std::string("MCT_Godot : draw_image : " + str_draw_image + "/n").c_str());
-	// OS::get_singleton()->print(std::string("MCT_Godot : camera_feed_id : " + std::to_string(camera_feed_id) + "/n").c_str());
 	if (draw_image && camera_feed_id > -1) {
-		print_gl_error("MCT 1");
 		RENDER_TIMESTAMP("Render Camera feed");
 
 		glEnable(GL_DEPTH_TEST);
@@ -2554,73 +2509,20 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
-		print_gl_error("MCT 2");
-		// GLES3::FeedEffects *feed_effects = GLES3::FeedEffects::get_singleton();
-		if (!CameraServer::get_singleton()) {
-			OS::get_singleton()->print("MCT_Godot : 2 CameraServer does not exist/n");
-		}
-		OS::get_singleton()->print("MCT_Godot : ok 1 ?/n");
 		Ref<CameraFeed> feed = CameraServer::get_singleton()->get_feed_by_id(camera_feed_id);
-		OS::get_singleton()->print("MCT_Godot : ok 2 ?/n");
-		print_gl_error("MCT 3");
-		OS::get_singleton()->print("MCT_Godot : ok 3 ?/n");
-		// OS::get_singleton()->print("MCT_Godot : 2 RasterizerSceneGLES3/n");
-
-		RID dest_framebuffer = rt->self;
-		// if (feed->is_depthmap_available() && feed->is_displaying_depthmap()) {
-		// 	RID camera_DEPTHMAP = feed->get_texture(CameraServer::FEED_DEPTHMAP);
-		// 	// unsigned int camera_depthmap = feed->get_external_depthmap();
-		// 	print_gl_error("MCT 4a");
-		// 		// glActiveTexture(GL_TEXTURE0 + 0);
-
-		// 		// glBindTexture(GL_TEXTURE_EXTERNAL_OES, camera_depthmap);
-		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		// 	GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
-		// 	print_gl_error("MCT 5a");
-		// 	// RID useless;
-		// 	// feed_effects->copy_external(useless, dest_framebuffer);
-		// 	// feed_effects->copy_external(camera_DEPTHMAP, dest_framebuffer);
-		// 	OS::get_singleton()->print("MCT_Godot : get_midDepthMeters : %f", feed->get_midDepthMeters());
-		// 	OS::get_singleton()->print("MCT_Godot : get_maxDepthMeters : %f", feed->get_maxDepthMeters());
-		// 	feed_effects->copy_depthmap(feed->get_midDepthMeters(), feed->get_maxDepthMeters());
-		// 	print_gl_error("MCT 6a");
-		// } else {
-		// 	RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
-		// 	print_gl_error("MCT 4b");
-		// 	GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 0);
-		// 	print_gl_error("MCT 5b");
-		// 	feed_effects->copy_external_feed();
-		// 	print_gl_error("MCT 6b");
-		// }
 
 		if (feed.is_valid()) {
-			GLES3::OcclusionEffects *occlusion_effects = GLES3::OcclusionEffects::get_singleton();
-			OS::get_singleton()->print("MCT_Godot : ok 4 ?/n");
 			if (feed->is_depthmap_available()) {
-			OS::get_singleton()->print("MCT_Godot : ok 5 ?/n");
-
 				RID camera_DEPTHMAP = feed->get_texture(CameraServer::FEED_DEPTHMAP);
-			OS::get_singleton()->print("MCT_Godot : ok 6 ?/n");
 				GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
-			OS::get_singleton()->print("MCT_Godot : ok 7 ?/n");
 			} 
 
-			OS::get_singleton()->print("MCT_Godot : ok 8 ?/n");
 			RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
-			OS::get_singleton()->print("MCT_Godot : ok 9 ?/n");
 			GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 1);
-			// float width = scene_state.ubo.viewport_size[0];
-			// float height = scene_state.ubo.viewport_size[1];
-			// float depthmap_width = 1.0; //width / 50.f; //feed->get_depthmap_base_width();
-			// float point_size = width / depthmap_width;
 			float max_depth_meters = feed->get_maxDepthMeters();
 
-			OS::get_singleton()->print("MCT_Godot : ok 10 ?/n");
+			GLES3::OcclusionEffects *occlusion_effects = GLES3::OcclusionEffects::get_singleton();
 			occlusion_effects->fill_z_buffer(feed->is_depthmap_available(), feed->is_displaying_depthmap(), max_depth_meters);
-			OS::get_singleton()->print("MCT_Godot : ok 11 ?/n");
 
 			glDisable(GL_BLEND);
 		}

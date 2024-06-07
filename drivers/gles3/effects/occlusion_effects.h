@@ -46,9 +46,6 @@ class OcclusionEffects {
 
     static OcclusionEffects * singleton;
 
-	GLuint screen_point_cloud = 0;
-	GLuint screen_point_cloud_array = 0;
-
     GLuint screen_triangle = 0;
 	GLuint screen_triangle_array = 0;
 
@@ -64,10 +61,8 @@ class OcclusionEffects {
 	void fill_z_buffer(bool p_use_depth, bool p_show_depthmap, float p_max_depth_meters);
 
 private:
-	void draw_screen_point_cloud(uint16_t p_nbPoints);
-
-	void draw_screen_triangle(uint16_t p_nbPoints);
-	void draw_screen_quad(uint16_t p_nbPoints);
+	void draw_screen_triangle();
+	void draw_screen_quad();
 
 };
 

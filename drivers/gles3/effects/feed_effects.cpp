@@ -123,14 +123,14 @@ void FeedEffects::copy_external_feed() {
 	// Check if GL_OES_EGL_image_external_essl3 extension is supported
     const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
     if (!extensions || !strstr(extensions, "GL_OES_EGL_image_external_essl3")) {
-		OS::get_singleton()->print("MCT_Godot : GL_OES_EGL_image_external_essl3 extension not supported!");
+		OS::get_singleton()->print("Godot : GL_OES_EGL_image_external_essl3 extension not supported!");
         // Handle the error
         return;
     }
 
 	bool success = feed.shader.version_bind_shader(feed.shader_version, FeedShaderGLES3::MODE_DEFAULT, FeedShaderGLES3::USE_EXTERNAL_SAMPLER);
 	if (!success) {
-		OS::get_singleton()->print("MCT_Godot : FeedShaderGLES3 Could not bind version_bind_shader USE_EXTERNAL_SAMPLER");
+		OS::get_singleton()->print("Godot : FeedShaderGLES3 Could not bind version_bind_shader USE_EXTERNAL_SAMPLER");
 		return;
 	}
 
@@ -140,7 +140,7 @@ void FeedEffects::copy_external_feed() {
 void FeedEffects::copy_depthmap(float midDepthMeters, float maxDepthMeters) {
 	bool success = feed.shader.version_bind_shader(feed.shader_version, FeedShaderGLES3::MODE_DEFAULT, FeedShaderGLES3::COPY_DEPTHMAP);
 	if (!success) {
-		OS::get_singleton()->print("MCT_Godot : FeedShaderGLES3 Could not bind version_bind_shader COPY_DEPTHMAP");
+		OS::get_singleton()->print("Godot : FeedShaderGLES3 Could not bind version_bind_shader COPY_DEPTHMAP");
 		return;
 	}
 

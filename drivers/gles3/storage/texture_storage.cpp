@@ -749,37 +749,6 @@ void TextureStorage::texture_free(RID p_texture) {
 	texture_owner.free(p_texture);
 }
 
-void print_gl_error1(const char * in_message) {
-	std::string error_value;
-	switch (glGetError())
-	{
-	case GL_NO_ERROR:
-		error_value = "";
-		break;
-	case GL_INVALID_ENUM:
-		error_value = "GL_INVALID_ENUM";
-		break;
-	case GL_INVALID_VALUE:
-		error_value = "GL_INVALID_VALUE";
-		break;
-	case GL_INVALID_OPERATION:
-		error_value = "GL_INVALID_OPERATION";
-		break;
-	case GL_OUT_OF_MEMORY:
-		error_value = "GL_OUT_OF_MEMORY";
-		break;
-	case GL_INVALID_FRAMEBUFFER_OPERATION:
-		error_value = "GL_INVALID_FRAMEBUFFER_OPERATION";
-		break;
-	default:
-		break;
-	}
-	// if (! error_value.empty()) 
-	{
-		OS::get_singleton()->print((std::string("MCT_Godot : ") + std::string(in_message) + " " + error_value).c_str());
-	}
-}
-
 RID TextureStorage::texture_set_external(RID p_texture, int p_width, int p_height) {
 	Texture texture;
 	texture.width = p_width;
@@ -793,56 +762,12 @@ RID TextureStorage::texture_set_external(RID p_texture, int p_width, int p_heigh
 	texture.target = GL_TEXTURE_EXTERNAL_OES;
 #endif
 	_get_gl_image_and_format(Ref<Image>(), texture.format, texture.real_format, texture.gl_format_cache, texture.gl_internal_format_cache, texture.gl_type_cache, texture.compressed, false);
-	print_gl_error1("MCT set external 0");
 	texture.total_data_size = Image::get_image_data_size(texture.width, texture.height, texture.format, texture.mipmaps);
 	texture.active = true;
-	print_gl_error1("MCT set external 1");
 	glGenTextures(1, &texture.tex_id);
-	print_gl_error1("MCT set external 2");
 	GLES3::Utilities::get_singleton()->texture_allocated_data(texture.tex_id, texture.total_data_size, "Texture 2D");
-	print_gl_error1("MCT set external 3");
-	// texture_owner.initialize_rid(p_texture, texture);
-	// print_gl_error1("MCT set external 4");
-	// OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : p_texture = %d", p_texture.get_id());
-	// OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : texture->tex_id = %d", texture.tex_id);
+
 	return texture_owner.make_rid(texture);
-
-	// Texture *texture = texture_owner.get_or_null(p_texture);
-
-	// ERR_FAIL_COND(!texture);
-	// texture->width = p_width;
-	// texture->height = p_height;
-	// texture->alloc_width = texture->width;
-	// texture->alloc_height = texture->height;
-	// texture->mipmaps = 1;
-
-	// // most of this is ignored
-	// texture->depth = 1;
-	// texture->format = Image::FORMAT_RGB8;
-	// texture->stored_cube_sides = 0;
-	// // texture->flags = 0;
-	// texture->type = Texture::TYPE_2D;
-
-	// texture->target = GL_TEXTURE_EXTERNAL_OES;
-	// _get_gl_image_and_format(Ref<Image>(), texture->format, texture->real_format, texture->gl_format_cache, texture->gl_internal_format_cache, texture->gl_type_cache, texture->compressed, false);
-	// texture->total_data_size = Image::get_image_data_size(texture->width, texture->height, texture->format, texture->mipmaps);
-	// texture->active = true;
-
-	// glBindTexture(texture->target, texture->tex_id);
-	// glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// glBindTexture(texture->target, 0);
-
-	// // // glActiveTexture(GL_TEXTURE0);
-	// // // glBindTexture(texture->target, texture->tex_id);
-	// // // glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// // // glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// // texture_owner.initialize_rid(p_texture, *texture);
-
-	
-	// OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : p_texture = %d", p_texture.get_id());
-	// OS::get_singleton()->print("MCT_Godot : TextureStorage::texture_set_external : texture->tex_id = %d", texture->tex_id);
 }
 
 void TextureStorage::texture_2d_initialize(RID p_texture, const Ref<Image> &p_image) {
@@ -1514,7 +1439,6 @@ bool CheckExtension1(const char* extensionName) {
 }
 
 void TextureStorage::texture_bind(RID p_texture, uint32_t p_texture_no) {
-	// OS::get_singleton()->print("MCT_Godot : 1 texture_bind/n");
 	Texture *texture = texture_owner.get_or_null(p_texture);
 
 	ERR_FAIL_NULL(texture);
@@ -1522,25 +1446,13 @@ void TextureStorage::texture_bind(RID p_texture, uint32_t p_texture_no) {
 	int max_texture_units;
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_texture_units);
 
-	print_gl_error1("MCT before");
-
 	glActiveTexture(GL_TEXTURE0 + p_texture_no);
-
-	print_gl_error1("MCT during");
-
-	if (! CheckExtension1("GL_OES_EGL_image_external_essl3")) {
-		OS::get_singleton()->print("MCT_Godot : GL_OES_EGL_image_external_essl3 is not available/n");
-	}
 
 	glBindTexture(texture->target, texture->tex_id);
 	glTexParameteri(texture->target, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(texture->target, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	// OS::get_singleton()->print("MCT_Godot : 2 texture_bind/n");
-
-	print_gl_error1("MCT after");
 }
 
 /* TEXTURE ATLAS API */

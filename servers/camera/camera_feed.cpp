@@ -152,7 +152,6 @@ uint64_t CameraFeed::get_texture_tex_id(CameraServer::FeedImage p_which) {
 
 CameraFeed::CameraFeed() {
 	// initialize our feed
-	// OS::get_singleton()->print("MCT_Godot : CameraFeed CameraFeed()/n");
 	id = CameraServer::get_singleton()->get_free_id();
 	base_width = 0;
 	base_height = 0;
@@ -172,7 +171,6 @@ CameraFeed::CameraFeed() {
 }
 
 CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
-	// OS::get_singleton()->print("MCT_Godot : CameraFeed CameraFeed(String p_name, FeedPosition p_position)/n");
 	// initialize our feed
 	id = CameraServer::get_singleton()->get_free_id();
 	base_width = 0;
@@ -275,51 +273,24 @@ void CameraFeed::set_YCbCr_imgs(const Ref<Image> &p_y_img, const Ref<Image> &p_c
 }
 
 void CameraFeed::set_external(int p_width, int p_height) {
-	// OS::get_singleton()->print("MCT_Godot : CameraFeed::set_external");
-	// if ((base_width != p_width) || (base_height != p_height)) 
+	if ((base_width != p_width) || (base_height != p_height)) 
 	{
 		// We're assuming here that our camera image doesn't change around formats etc, allocate the whole lot...
 		base_width = p_width;
 		base_height = p_height;
 
-		// Ref<Image> image = memnew(Image(p_width, p_height, false, Image::FORMAT_RGBA8));
-		// RID new_texture = RenderingServer::get_singleton()->texture_2d_create(image);
-		// texture[CameraServer::FEED_YCBCR_IMAGE] = new_texture;
-
 		RID new_texture = RenderingServer::get_singleton()->texture_set_external(texture[CameraServer::FEED_YCBCR_IMAGE], p_width, p_height);
-		// OS::get_singleton()->print(std::string("MCT_Godot : new_texture.get_id() " + std::to_string(new_texture.get_id())).c_str());
 		RenderingServer::get_singleton()->texture_replace(texture[CameraServer::FEED_YCBCR_IMAGE], new_texture);
-		// OS::get_singleton()->print(std::string("MCT_Godot : new_texture.get_id() " + std::to_string(texture[CameraServer::FEED_YCBCR_IMAGE].get_id())).c_str());
 	}
 
 	datatype = CameraFeed::FEED_EXTERNAL;
 }
 
 void CameraFeed::set_external_depthmap(const PackedByteArray& p_depthbuffer, int p_width, int p_height) {
-	//? TODO: Maxime check if we can use the glint handle given by ARCore instead of using the CPU
-
 	// We're assuming here that our camera image doesn't change around formats etc, allocate the whole lot...
 	depthmap_is_available = true;
 	depthmap_base_width = p_width;
 	depthmap_base_height = p_height;
-
-	// int num_elements = p_width * p_height;
-    // const uint16_t* depth_data = static_cast<const uint16_t*>(p_depthbuffer);
-
-    // // Create a vector and copy the data
-    // std::vector<uint16_t> depth_vector(depth_data, depth_data + num_elements);
-
-
-    // Create an Image with the depth buffer data
-    // Vector<uint8_t> data;
-    // data.resize(p_width * p_height * 2); // 2 bytes per pixel (16-bit)
-
-	// // Copy depth buffer data to Godot Image data
-    // for (int i = 0; i < p_width * p_height; ++i) {
-    //     uint16_t depth_value = p_depthbuffer[i];
-    //     data.write[i * 2] = depth_value & 0xFF; // Low byte
-    //     data.write[i * 2 + 1] = (depth_value >> 8) & 0xFF; // High byte
-    // }
 
     // Create the image
     Ref<Image> image = Image::create_from_data(p_width, p_height, false, Image::FORMAT_RG8, p_depthbuffer); // Using L8 format for 8-bit per channel
@@ -328,8 +299,6 @@ void CameraFeed::set_external_depthmap(const PackedByteArray& p_depthbuffer, int
     RID new_texture = RS::get_singleton()->texture_2d_create(image);
 	RenderingServer::get_singleton()->texture_replace(texture[CameraServer::FEED_DEPTHMAP], new_texture);
 
-	// depthmap_handle = p_depthmap_handle;
-	
 	depth_map_datatype = CameraFeed::FEED_EXTERNAL;
 }
 
@@ -338,7 +307,6 @@ bool CameraFeed::is_depthmap_available() {
 }
 
 void CameraFeed::set_display_depthmap(bool p_enabled) {
-	OS::get_singleton()->print("MCT_Godot : set_display_depthmap %d", p_enabled ? 1 : 0);
 	display_depthmap = p_enabled;
 }
 
