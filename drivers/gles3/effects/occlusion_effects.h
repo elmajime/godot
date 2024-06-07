@@ -49,16 +49,26 @@ class OcclusionEffects {
 	GLuint screen_point_cloud = 0;
 	GLuint screen_point_cloud_array = 0;
 
+    GLuint screen_triangle = 0;
+	GLuint screen_triangle_array = 0;
+
+    GLuint quad = 0;
+	GLuint quad_array = 0;
+
     public:
 	static OcclusionEffects *get_singleton();
     
 	OcclusionEffects();
 	~OcclusionEffects();
 
-	void fill_z_buffer(uint8_t p_vertical_precision, uint8_t p_horizontal_precision, const float* p_inv_view_mat, const float* p_inv_proj_mat);
+	void fill_z_buffer(bool p_use_depth, bool p_show_depthmap, float p_max_depth_meters);
 
 private:
 	void draw_screen_point_cloud(uint16_t p_nbPoints);
+
+	void draw_screen_triangle(uint16_t p_nbPoints);
+	void draw_screen_quad(uint16_t p_nbPoints);
+
 };
 
 } // namespace GLES3

@@ -103,7 +103,7 @@ void main() {
 	float depth_mm = depthInMillimeters(source, uv_interp);
 	float depth_meters = depth_mm * 0.001;
 
-	float normalized_depth = inverseLerp(depth_meters, 0.0, mid_depth_meters);
+	float normalized_depth = inverseLerp(depth_meters, 0.0, max_depth_meters);
 	// float normalized_depth = 0.0;
 	// if (depth_meters < mid_depth_meters) {
 	// 	// Short-range depth (0m to 8m) maps to first half of the color palette;

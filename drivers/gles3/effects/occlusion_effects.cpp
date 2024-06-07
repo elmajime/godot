@@ -105,6 +105,64 @@ OcclusionEffects::OcclusionEffects() {
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind
 	}
+
+	{ // Screen Triangle.
+		glGenBuffers(1, &screen_triangle);
+		glBindBuffer(GL_ARRAY_BUFFER, screen_triangle);
+
+		const float qv[6] = {
+			-1.0f,
+			-1.0f,
+			1.0f,
+			-1.0f,
+			-1.0f,
+			1.0f,
+		};
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6, qv, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind
+
+		glGenVertexArrays(1, &screen_triangle_array);
+		glBindVertexArray(screen_triangle_array);
+		glBindBuffer(GL_ARRAY_BUFFER, screen_triangle);
+		glVertexAttribPointer(RS::ARRAY_VERTEX, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
+		glEnableVertexAttribArray(RS::ARRAY_VERTEX);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind
+	}
+
+	{ // Screen Quad
+
+		glGenBuffers(1, &quad);
+		glBindBuffer(GL_ARRAY_BUFFER, quad);
+
+		const float qv[12] = {
+			-1.0f,
+			-1.0f,
+			1.0f,
+			-1.0f,
+			1.0f,
+			1.0f,
+			-1.0f,
+			-1.0f,
+			1.0f,
+			1.0f,
+			-1.0f,
+			1.0f,
+		};
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, qv, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind
+
+		glGenVertexArrays(1, &quad_array);
+		glBindVertexArray(quad_array);
+		glBindBuffer(GL_ARRAY_BUFFER, quad);
+		glVertexAttribPointer(RS::ARRAY_VERTEX, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
+		glEnableVertexAttribArray(RS::ARRAY_VERTEX);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind
+	}
+
 	print_gl_error2("MCT Occ 2");
 }
 
@@ -112,6 +170,8 @@ OcclusionEffects::~OcclusionEffects() {
 	singleton = nullptr;
 	glDeleteBuffers(1, &screen_point_cloud);
 	glDeleteVertexArrays(1, &screen_point_cloud_array);
+	glDeleteBuffers(1, &screen_triangle);
+	glDeleteVertexArrays(1, &screen_triangle_array);
 	occlusion.shader.version_free(occlusion.shader_version);
 }
 
@@ -138,45 +198,54 @@ Transform3D transform3D_from_mat4(const float* p_mat4) {
 	return res;
 }
 
-void OcclusionEffects::fill_z_buffer(uint8_t p_vertical_precision, uint8_t p_horizontal_precision, const float* p_inv_view_mat, const float* p_inv_proj_mat) {
+void OcclusionEffects::fill_z_buffer(bool p_use_depth, bool p_show_depthmap, float p_max_depth_meters) {
 
-	bool success = occlusion.shader.version_bind_shader(occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
-	print_gl_error2("MCT Occ 3");
+	// bool success = occlusion.shader.version_bind_shader(occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
+	// print_gl_error2("MCT Occ 3");
+	// if (!success) {
+	// 	OS::get_singleton()->print("MCT_Godot : OcclusionShaderGLES3 Could not bind version_bind_shader");
+	// 	return;
+	// }
+
+	bool success = occlusion.shader.version_bind_shader(occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT, OcclusionShaderGLES3::USE_EXTERNAL_SAMPLER);
 	if (!success) {
-		OS::get_singleton()->print("MCT_Godot : OcclusionShaderGLES3 Could not bind version_bind_shader");
+		OS::get_singleton()->print("MCT_Godot : OcclusionShaderGLES3 Could not bind version_bind_shader USE_EXTERNAL_SAMPLER");
 		return;
 	}
-	OS::get_singleton()->print("MCT_Godot : p_vertical_precision %d", p_vertical_precision);
-	OS::get_singleton()->print("MCT_Godot : p_horizontal_precision %d", p_horizontal_precision);
+	print_gl_error2("MCT Occ 3");
 
-	Transform3D inv_view_mat = transform3D_from_mat4(p_inv_view_mat);
-	Transform3D inv_proj_mat = transform3D_from_mat4(p_inv_proj_mat);
+	// int32_t nb_horizontal_points = p_point_size >= p_width ? 1 : p_width / p_point_size;
+	// int32_t nb_vertical_points = p_point_size >= p_height ? 1 : p_height / p_point_size;
+	// int32_t nb_points = nb_horizontal_points*nb_vertical_points;
+	// float screen_point_size = p_point_size / p_width;
 
-	Projection inv_view_proj_mat = inv_view_mat * inv_proj_mat;
+	int16_t show_depthmap = p_show_depthmap ? 1 : 0;
+	int16_t use_depth = p_use_depth ? 1 : 0;
 
-	occlusion.shader.version_set_uniform(OcclusionShaderGLES3::VERTICAL_PRECISION, (int)(p_vertical_precision), occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
-	print_gl_error2("MCT Occ 4");
-	occlusion.shader.version_set_uniform(OcclusionShaderGLES3::HORIZONTAL_PRECISION, (int)(p_horizontal_precision), occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
+	// OS::get_singleton()->print("MCT_Godot : p_point_size %f", p_point_size);
+	// OS::get_singleton()->print("MCT_Godot : nb_horizontal_points %d", nb_horizontal_points);
+	// OS::get_singleton()->print("MCT_Godot : nb_vertical_points %d", nb_vertical_points);
+	// OS::get_singleton()->print("MCT_Godot : nb_points %d", nb_points);
+	// OS::get_singleton()->print("MCT_Godot : screen_point_size %f", screen_point_size);
+	OS::get_singleton()->print("MCT_Godot : p_max_depth_meters %f", p_max_depth_meters);
+	OS::get_singleton()->print("MCT_Godot : p_show_depthmap %f", show_depthmap);
+
+	// occlusion.shader.version_set_uniform(OcclusionShaderGLES3::NB_HORIZONTAL_POINTS, nb_horizontal_points, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
+	// print_gl_error2("MCT Occ 4");
+	// occlusion.shader.version_set_uniform(OcclusionShaderGLES3::NB_VERTICAL_POINTS, nb_vertical_points, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
+	// print_gl_error2("MCT Occ 5");
+	// occlusion.shader.version_set_uniform(OcclusionShaderGLES3::SCREEN_POINT_SIZE, screen_point_size, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
+	occlusion.shader.version_set_uniform(OcclusionShaderGLES3::MAX_DEPTH, p_max_depth_meters, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
 	print_gl_error2("MCT Occ 5");
-	// occlusion.shader.version_set_uniform(OcclusionShaderGLES3::INV_VIEW_PROJECTION_MATRIX, inv_view_proj_mat, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
-	// print_gl_error2("MCT Occ 6");
+	occlusion.shader.version_set_uniform(OcclusionShaderGLES3::SHOW_DEPTHMAP, show_depthmap, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
+	print_gl_error2("MCT Occ 6");
+	occlusion.shader.version_set_uniform(OcclusionShaderGLES3::USE_DEPTH, use_depth, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
+	print_gl_error2("MCT Occ 7");
 
-	draw_screen_point_cloud(p_vertical_precision*p_horizontal_precision);
+	// draw_screen_point_cloud(nb_points);
+	draw_screen_quad(1);
 	print_gl_error2("MCT Occ 7");
 }
-
-// void OcclusionEffects::copy_depthmap(float midDepthMeters, float maxDepthMeters) {
-// 	bool success = occlusion.shader.version_bind_shader(occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT, OcclusionShaderGLES3::COPY_DEPTHMAP);
-// 	if (!success) {
-// 		OS::get_singleton()->print("MCT_Godot : Could not bind version_bind_shader COPY_DEPTHMAP");
-// 		return;
-// 	}
-
-// 	occlusion.shader.version_set_uniform(OcclusionShaderGLES3::MIDDEPTHMETERS, midDepthMeters, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
-// 	occlusion.shader.version_set_uniform(OcclusionShaderGLES3::MAXDEPTHMETERS, maxDepthMeters, occlusion.shader_version, OcclusionShaderGLES3::MODE_DEFAULT);
-
-// 	draw_screen_point_cloud();
-// }
 
 void OcclusionEffects::draw_screen_point_cloud(uint16_t p_nbPoints) {
 	glBindVertexArray(screen_point_cloud_array);
@@ -189,6 +258,19 @@ void OcclusionEffects::draw_screen_point_cloud(uint16_t p_nbPoints) {
 	// print_gl_error2("MCT Occ 11");
 	glBindVertexArray(0);
 	print_gl_error2("MCT Occ 12");
+}
+
+void OcclusionEffects::draw_screen_triangle(uint16_t p_nbPoints) {
+	glBindVertexArray(screen_triangle_array);
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 3, p_nbPoints);
+	glBindVertexArray(0);
+}
+
+void OcclusionEffects::draw_screen_quad(uint16_t p_nbPoints) {
+	glBindVertexArray(quad_array);
+	glDrawArrays(GL_TRIANGLES, 0, p_nbPoints*6);
+	// glDrawArraysInstanced(GL_TRIANGLES, 0, 6, p_nbPoints);
+	glBindVertexArray(0);
 }
 
 #endif // GLES3_ENABLED

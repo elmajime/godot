@@ -2550,52 +2550,79 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		RENDER_TIMESTAMP("Render Camera feed");
 
 		glEnable(GL_DEPTH_TEST);
-		glDisable(GL_BLEND);
+		glEnable(GL_BLEND);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
 		print_gl_error("MCT 2");
-		GLES3::FeedEffects *feed_effects = GLES3::FeedEffects::get_singleton();
+		// GLES3::FeedEffects *feed_effects = GLES3::FeedEffects::get_singleton();
+		if (!CameraServer::get_singleton()) {
+			OS::get_singleton()->print("MCT_Godot : 2 CameraServer does not exist/n");
+		}
+		OS::get_singleton()->print("MCT_Godot : ok 1 ?/n");
 		Ref<CameraFeed> feed = CameraServer::get_singleton()->get_feed_by_id(camera_feed_id);
+		OS::get_singleton()->print("MCT_Godot : ok 2 ?/n");
 		print_gl_error("MCT 3");
+		OS::get_singleton()->print("MCT_Godot : ok 3 ?/n");
 		// OS::get_singleton()->print("MCT_Godot : 2 RasterizerSceneGLES3/n");
 
 		RID dest_framebuffer = rt->self;
-		if (feed->is_depthmap_available() && feed->is_displaying_depthmap()) {
-			RID camera_DEPTHMAP = feed->get_texture(CameraServer::FEED_DEPTHMAP);
-			// unsigned int camera_depthmap = feed->get_external_depthmap();
-			print_gl_error("MCT 4a");
-				// glActiveTexture(GL_TEXTURE0 + 0);
+		// if (feed->is_depthmap_available() && feed->is_displaying_depthmap()) {
+		// 	RID camera_DEPTHMAP = feed->get_texture(CameraServer::FEED_DEPTHMAP);
+		// 	// unsigned int camera_depthmap = feed->get_external_depthmap();
+		// 	print_gl_error("MCT 4a");
+		// 		// glActiveTexture(GL_TEXTURE0 + 0);
 
-				// glBindTexture(GL_TEXTURE_EXTERNAL_OES, camera_depthmap);
-				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_REPEAT);
-				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_REPEAT);
-				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
-			print_gl_error("MCT 5a");
-			// RID useless;
-			// feed_effects->copy_external(useless, dest_framebuffer);
-			// feed_effects->copy_external(camera_DEPTHMAP, dest_framebuffer);
-			OS::get_singleton()->print("MCT_Godot : get_midDepthMeters : %f", feed->get_midDepthMeters());
-			OS::get_singleton()->print("MCT_Godot : get_maxDepthMeters : %f", feed->get_maxDepthMeters());
-			feed_effects->copy_depthmap(feed->get_midDepthMeters(), feed->get_maxDepthMeters());
-			print_gl_error("MCT 6a");
+		// 		// glBindTexture(GL_TEXTURE_EXTERNAL_OES, camera_depthmap);
+		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// 		// glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// 	GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
+		// 	print_gl_error("MCT 5a");
+		// 	// RID useless;
+		// 	// feed_effects->copy_external(useless, dest_framebuffer);
+		// 	// feed_effects->copy_external(camera_DEPTHMAP, dest_framebuffer);
+		// 	OS::get_singleton()->print("MCT_Godot : get_midDepthMeters : %f", feed->get_midDepthMeters());
+		// 	OS::get_singleton()->print("MCT_Godot : get_maxDepthMeters : %f", feed->get_maxDepthMeters());
+		// 	feed_effects->copy_depthmap(feed->get_midDepthMeters(), feed->get_maxDepthMeters());
+		// 	print_gl_error("MCT 6a");
+		// } else {
+		// 	RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
+		// 	print_gl_error("MCT 4b");
+		// 	GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 0);
+		// 	print_gl_error("MCT 5b");
+		// 	feed_effects->copy_external_feed();
+		// 	print_gl_error("MCT 6b");
+		// }
 
+		if (feed.is_valid()) {
 			GLES3::OcclusionEffects *occlusion_effects = GLES3::OcclusionEffects::get_singleton();
+			OS::get_singleton()->print("MCT_Godot : ok 4 ?/n");
+			if (feed->is_depthmap_available()) {
+			OS::get_singleton()->print("MCT_Godot : ok 5 ?/n");
 
-			GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
-			uint8_t width = 1152;//rb->width;//feed->get_base_width() * 100;
-			uint8_t height = 648;//rb->height;//feed->get_base_height() * 100;
-			occlusion_effects->fill_z_buffer(width, height, scene_state.ubo.inv_view_matrix, scene_state.ubo.inv_projection_matrix);
+				RID camera_DEPTHMAP = feed->get_texture(CameraServer::FEED_DEPTHMAP);
+			OS::get_singleton()->print("MCT_Godot : ok 6 ?/n");
+				GLES3::TextureStorage::get_singleton()->texture_bind(camera_DEPTHMAP, 0);
+			OS::get_singleton()->print("MCT_Godot : ok 7 ?/n");
+			} 
 
-		} else {
+			OS::get_singleton()->print("MCT_Godot : ok 8 ?/n");
 			RID camera_YCBCR = feed->get_texture(CameraServer::FEED_YCBCR_IMAGE);
-			print_gl_error("MCT 4b");
-			GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 0);
-			print_gl_error("MCT 5b");
-			feed_effects->copy_external_feed();
-			print_gl_error("MCT 6b");
+			OS::get_singleton()->print("MCT_Godot : ok 9 ?/n");
+			GLES3::TextureStorage::get_singleton()->texture_bind(camera_YCBCR, 1);
+			// float width = scene_state.ubo.viewport_size[0];
+			// float height = scene_state.ubo.viewport_size[1];
+			// float depthmap_width = 1.0; //width / 50.f; //feed->get_depthmap_base_width();
+			// float point_size = width / depthmap_width;
+			float max_depth_meters = feed->get_maxDepthMeters();
+
+			OS::get_singleton()->print("MCT_Godot : ok 10 ?/n");
+			occlusion_effects->fill_z_buffer(feed->is_depthmap_available(), feed->is_displaying_depthmap(), max_depth_meters);
+			OS::get_singleton()->print("MCT_Godot : ok 11 ?/n");
+
+			glDisable(GL_BLEND);
 		}
 	}
 

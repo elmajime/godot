@@ -338,6 +338,7 @@ bool CameraFeed::is_depthmap_available() {
 }
 
 void CameraFeed::set_display_depthmap(bool p_enabled) {
+	OS::get_singleton()->print("MCT_Godot : set_display_depthmap %d", p_enabled ? 1 : 0);
 	display_depthmap = p_enabled;
 }
 
