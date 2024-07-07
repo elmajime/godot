@@ -81,7 +81,6 @@ protected:
 	FeedDataType depth_map_datatype; // type of texture representing the depthmap
 	bool depthmap_is_available;
 	bool display_depthmap;
-	float midDepthMeters;
 	float maxDepthMeters;
 
 	unsigned int depthmap_handle;
@@ -123,14 +122,13 @@ public:
 	void set_external_depthmap(const PackedByteArray& p_depthbuffer, int p_width, int p_height);
 
 	unsigned int get_external_depthmap();
-	float get_midDepthMeters();
 	float get_maxDepthMeters();
 
 
 	bool is_depthmap_available();
-	void set_display_depthmap(bool p_enabled);
-	bool is_displaying_depthmap();
-	void set_depthmap_display_mapping(float p_midDepthMeters, float p_maxDepthMeters);
+	void set_should_display_depthmap(bool p_enabled);
+	bool should_display_depthmap();
+	void set_max_depth_meters(float p_maxDepthMeters);
 
 	virtual bool activate_feed();
 	virtual void deactivate_feed();

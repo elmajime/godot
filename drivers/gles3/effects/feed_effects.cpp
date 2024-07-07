@@ -36,6 +36,8 @@
 #include <GLES3/gl3ext.h>
 #endif
 
+#define GL_PROGRAM_POINT_SIZE 0x8642
+
 using namespace GLES3;
 
 FeedEffects *FeedEffects::singleton = nullptr;
@@ -58,10 +60,10 @@ FeedEffects::FeedEffects() {
 		const float qv[6] = {
 			-1.0f,
 			-1.0f,
-			3.0f,
+			1.0f,
 			-1.0f,
 			-1.0f,
-			3.0f,
+			1.0f,
 		};
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6, qv, GL_STATIC_DRAW);
@@ -107,48 +109,56 @@ FeedEffects::FeedEffects() {
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind
 	}
+
 }
 
 FeedEffects::~FeedEffects() {
 	singleton = nullptr;
 	glDeleteBuffers(1, &screen_triangle);
 	glDeleteVertexArrays(1, &screen_triangle_array);
-	glDeleteBuffers(1, &quad);
-	glDeleteVertexArrays(1, &quad_array);
 	feed.shader.version_free(feed.shader_version);
 }
 
-void FeedEffects::copy_external_feed() {
+Transform3D transform3D_from_mat4(const float* p_mat4) {
+	Transform3D res;
 
-	// Check if GL_OES_EGL_image_external_essl3 extension is supported
-    const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
-    if (!extensions || !strstr(extensions, "GL_OES_EGL_image_external_essl3")) {
-		OS::get_singleton()->print("Godot : GL_OES_EGL_image_external_essl3 extension not supported!");
-        // Handle the error
-        return;
-    }
+	res.basis.rows[0][0] = p_mat4[0];
+	res.basis.rows[1][0] = p_mat4[1];
+	res.basis.rows[2][0] = p_mat4[2];
+	// p_mat4[3] = 0;
+	res.basis.rows[0][1] = p_mat4[4];
+	res.basis.rows[1][1] = p_mat4[5];
+	res.basis.rows[2][1] = p_mat4[6];
+	// p_mat4[7] = 0;
+	res.basis.rows[0][2] = p_mat4[8];
+	res.basis.rows[1][2] = p_mat4[9];
+	res.basis.rows[2][2] = p_mat4[10];
+	// p_mat4[11] = 0;
+	res.origin.x = p_mat4[12];
+	res.origin.y = p_mat4[13];
+	res.origin.z = p_mat4[14];
+	// p_mat4[15] = 1;
 
+	return res;
+}
+
+void FeedEffects::fill_z_buffer(bool p_use_depth, bool p_show_depthmap, float p_max_depth_meters) {
 	bool success = feed.shader.version_bind_shader(feed.shader_version, FeedShaderGLES3::MODE_DEFAULT, FeedShaderGLES3::USE_EXTERNAL_SAMPLER);
 	if (!success) {
 		OS::get_singleton()->print("Godot : FeedShaderGLES3 Could not bind version_bind_shader USE_EXTERNAL_SAMPLER");
 		return;
 	}
 
-	draw_screen_triangle();
+	int16_t show_depthmap = p_show_depthmap ? 1 : 0;
+	int16_t use_depth = p_use_depth ? 1 : 0;
+
+	feed.shader.version_set_uniform(FeedShaderGLES3::MAX_DEPTH, p_max_depth_meters, feed.shader_version, FeedShaderGLES3::MODE_DEFAULT);
+	feed.shader.version_set_uniform(FeedShaderGLES3::SHOW_DEPTHMAP, show_depthmap, feed.shader_version, FeedShaderGLES3::MODE_DEFAULT);
+	feed.shader.version_set_uniform(FeedShaderGLES3::USE_DEPTH, use_depth, feed.shader_version, FeedShaderGLES3::MODE_DEFAULT);
+
+	draw_screen_quad();
 }
 
-void FeedEffects::copy_depthmap(float midDepthMeters, float maxDepthMeters) {
-	bool success = feed.shader.version_bind_shader(feed.shader_version, FeedShaderGLES3::MODE_DEFAULT, FeedShaderGLES3::COPY_DEPTHMAP);
-	if (!success) {
-		OS::get_singleton()->print("Godot : FeedShaderGLES3 Could not bind version_bind_shader COPY_DEPTHMAP");
-		return;
-	}
-
-	feed.shader.version_set_uniform(FeedShaderGLES3::MID_DEPTH_METERS, midDepthMeters, feed.shader_version, FeedShaderGLES3::MODE_DEFAULT, FeedShaderGLES3::COPY_DEPTHMAP);
-	feed.shader.version_set_uniform(FeedShaderGLES3::MAX_DEPTH_METERS, maxDepthMeters, feed.shader_version, FeedShaderGLES3::MODE_DEFAULT, FeedShaderGLES3::COPY_DEPTHMAP);
-
-	draw_screen_triangle();
-}
 
 void FeedEffects::draw_screen_triangle() {
 	glBindVertexArray(screen_triangle_array);

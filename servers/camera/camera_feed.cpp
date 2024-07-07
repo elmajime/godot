@@ -56,9 +56,9 @@ void CameraFeed::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_external", "width", "height"), &CameraFeed::set_external);
 	ClassDB::bind_method(D_METHOD("set_external_depthmap", "depthbuffer", "width", "height"), &CameraFeed::set_external_depthmap);
 	ClassDB::bind_method(D_METHOD("is_depthmap_available"), &CameraFeed::is_depthmap_available);
-	ClassDB::bind_method(D_METHOD("set_display_depthmap", "enabled"), &CameraFeed::set_display_depthmap);
-	ClassDB::bind_method(D_METHOD("is_displaying_depthmap"), &CameraFeed::is_displaying_depthmap);
-	ClassDB::bind_method(D_METHOD("set_depthmap_display_mapping"), &CameraFeed::set_depthmap_display_mapping);
+	ClassDB::bind_method(D_METHOD("set_should_display_depthmap", "enabled"), &CameraFeed::set_should_display_depthmap);
+	ClassDB::bind_method(D_METHOD("should_display_depthmap"), &CameraFeed::should_display_depthmap);
+	ClassDB::bind_method(D_METHOD("set_max_depth_meters"), &CameraFeed::set_max_depth_meters);
 
 	ClassDB::bind_method(D_METHOD("get_texture", "feed_image_type"), &CameraFeed::get_texture);
 	ClassDB::bind_method(D_METHOD("get_texture_tex_id", "feed_image_type"), &CameraFeed::get_texture_tex_id);
@@ -68,7 +68,7 @@ void CameraFeed::_bind_methods() {
 	ADD_GROUP("Feed", "feed_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "feed_is_active"), "set_active", "is_active");
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "feed_transform"), "set_transform", "get_transform");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "display_ar_depthmap"), "set_display_depthmap", "is_displaying_depthmap");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "display_ar_depthmap"), "set_should_display_depthmap", "should_display_depthmap");
 
 	BIND_ENUM_CONSTANT(FEED_NOIMAGE);
 	BIND_ENUM_CONSTANT(FEED_RGB);
@@ -166,7 +166,6 @@ CameraFeed::CameraFeed() {
 	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	depthmap_is_available = false;
 	display_depthmap = false;
-	midDepthMeters = 8.f;
 	maxDepthMeters = 30.f;
 }
 
@@ -186,7 +185,6 @@ CameraFeed::CameraFeed(String p_name, FeedPosition p_position) {
 	texture[CameraServer::FEED_DEPTHMAP] = RenderingServer::get_singleton()->texture_2d_placeholder_create();
 	depthmap_is_available = false;
 	display_depthmap = false;
-	midDepthMeters = 8.f;
 	maxDepthMeters = 30.f;
 }
 
@@ -306,25 +304,20 @@ bool CameraFeed::is_depthmap_available() {
 	return depthmap_is_available;
 }
 
-void CameraFeed::set_display_depthmap(bool p_enabled) {
+void CameraFeed::set_should_display_depthmap(bool p_enabled) {
 	display_depthmap = p_enabled;
 }
 
-bool CameraFeed::is_displaying_depthmap() {
+bool CameraFeed::should_display_depthmap() {
 	return display_depthmap;
 }
 
-void CameraFeed::set_depthmap_display_mapping(float p_midDepthMeters, float p_maxDepthMeters) {
-	midDepthMeters = p_midDepthMeters;
+void CameraFeed::set_max_depth_meters(float p_maxDepthMeters) {
 	maxDepthMeters = p_maxDepthMeters;
 }
 
 unsigned int CameraFeed::get_external_depthmap() {
 	return depthmap_handle;
-}
-
-float CameraFeed::get_midDepthMeters() {
-	return midDepthMeters;
 }
 
 float CameraFeed::get_maxDepthMeters() {

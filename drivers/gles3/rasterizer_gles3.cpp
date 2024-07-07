@@ -343,7 +343,6 @@ RasterizerGLES3::RasterizerGLES3() {
 	light_storage = memnew(GLES3::LightStorage);
 	copy_effects = memnew(GLES3::CopyEffects);
 	feed_effects = memnew(GLES3::FeedEffects);
-	occlusion_effects = memnew(GLES3::OcclusionEffects);
 	gi = memnew(GLES3::GI);
 	fog = memnew(GLES3::Fog);
 	canvas = memnew(RasterizerCanvasGLES3());

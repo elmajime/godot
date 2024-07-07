@@ -46,12 +46,10 @@ class FeedEffects {
 
     static FeedEffects * singleton;
 
-    // Use for full-screen effects. Slightly more efficient than screen_quad as this eliminates pixel overdraw along the diagonal.
-	GLuint screen_triangle = 0;
+    GLuint screen_triangle = 0;
 	GLuint screen_triangle_array = 0;
 
-    // Use for rect-based effects.
-	GLuint quad = 0;
+    GLuint quad = 0;
 	GLuint quad_array = 0;
 
     public:
@@ -60,12 +58,12 @@ class FeedEffects {
 	FeedEffects();
 	~FeedEffects();
 
-	void copy_external_feed();
-	void copy_depthmap(float midDepthMeters, float maxDepthMeters);
+	void fill_z_buffer(bool p_use_depth, bool p_show_depthmap, float p_max_depth_meters);
 
 private:
 	void draw_screen_triangle();
 	void draw_screen_quad();
+
 };
 
 } // namespace GLES3
