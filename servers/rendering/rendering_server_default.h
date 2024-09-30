@@ -196,6 +196,10 @@ public:
 		return RSG::texture_storage->texture_create_from_native_handle(p_type, p_format, p_native_handle, p_width, p_height, p_depth, p_layers, p_layered_type);
 	}
 
+	virtual void texture_external_initialize(RID p_texture, int p_width, int p_height, uint64_t p_external_buffer) override {
+		return RSG::texture_storage->texture_external_initialize(p_texture, p_width, p_height, p_external_buffer);
+	}
+
 	//these go through command queue if they are in another thread
 	FUNC3(texture_2d_update, RID, const Ref<Image> &, int)
 	FUNC2(texture_3d_update, RID, const Vector<Ref<Image>> &)
@@ -742,10 +746,8 @@ public:
 	FUNC2(environment_set_canvas_max_layer, RID, int)
 	FUNC6(environment_set_ambient_light, RID, const Color &, EnvironmentAmbientSource, float, float, EnvironmentReflectionSource)
 
-// FIXME: Disabled during Vulkan refactoring, should be ported.
-#if 0
 	FUNC2(environment_set_camera_feed_id, RID, int)
-#endif
+
 	FUNC6(environment_set_ssr, RID, bool, int, float, float, float)
 	FUNC1(environment_set_ssr_roughness_quality, EnvironmentSSRRoughnessQuality)
 
